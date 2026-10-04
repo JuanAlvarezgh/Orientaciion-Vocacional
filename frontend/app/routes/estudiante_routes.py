@@ -252,6 +252,12 @@ def _unificar_puntajes_riasec(intereses_puntajes, competencias_puntajes, puntaje
             combined_score = int_val + com_val
             
         comparativo[area]['total'] = combined_max
+        # Porcentaje de cada prueba por separado, para las gráficas de resultados
+        # (None cuando el estudiante aún no ha hecho esa prueba).
+        comparativo[area]['interes_pct'] = (
+            round(min(100.0, int_val / int_max * 100), 1) if has_intereses and int_max else None)
+        comparativo[area]['competencia_pct'] = (
+            round(min(100.0, com_val / com_max * 100), 1) if has_competencias and com_max else None)
         normalizado = (combined_score / combined_max * 100) if combined_max > 0 else 0
         # Red de seguridad: un porcentaje nunca puede salirse de 0–100. Si pasa,
         # es señal de que el denominador está mal y hay que revisarlo.
