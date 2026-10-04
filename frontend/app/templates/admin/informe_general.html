@@ -108,7 +108,7 @@
                 <canvas id="chartTipoColegio"></canvas>
             </div>
             {% else %}
-            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay datos demográficos registrados aún.</p>
+            <div class="empty-state"><p>No hay datos demográficos registrados aún.</p></div>
             {% endif %}
         </div>
 
@@ -143,7 +143,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No hay perfiles procesados aún.</p>
+            <div class="empty-state"><p>No hay perfiles procesados aún.</p></div>
             {% endif %}
         </div>
     </div>
@@ -213,7 +213,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin datos demográficos registrados.</p>
+            <div class="empty-state"><p>Sin datos demográficos registrados.</p></div>
             {% endif %}
         </div>
         <div class="card">
@@ -224,7 +224,7 @@
             {% if areas_interes %}
             <div class="chart-container"><canvas id="chartAreasDir"></canvas></div>
             {% else %}
-            <p style="color:var(--text-secondary); text-align:center; padding:1rem;">Sin datos disponibles.</p>
+            <div class="empty-state"><p>Sin datos disponibles.</p></div>
             {% endif %}
         </div>
     </div>
@@ -304,7 +304,7 @@
     {% if rol in ('investigador', 'ti', 'bienestar') or not rol %}
     <!-- ── Segmentación por Género ────────────────────────────────────────── -->
     <div class="page-header" style="margin-top: 2.5rem;">
-        <h2 style="font-size: 1.25rem;">Segmentación por Género</h2>
+        <h2>Segmentación por Género</h2>
         <p>Distribución de estudiantes y perfiles vocacionales según género</p>
     </div>
     <div class="grid-2">
@@ -313,7 +313,7 @@
             {% if seg_genero %}
             <div class="chart-container" style="height:240px;"><canvas id="chartGeneroInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
         <div class="card">
@@ -321,14 +321,14 @@
             {% if seg_genero_perfiles %}
             <div class="chart-container" style="height:240px;"><canvas id="chartPerfilesGeneroInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
     </div>
 
     <!-- ── Segmentación por Edad ──────────────────────────────────────────── -->
     <div class="page-header" style="margin-top: 2rem;">
-        <h2 style="font-size: 1.25rem;">Segmentación por Edad</h2>
+        <h2>Segmentación por Edad</h2>
         <p>Distribución de estudiantes y perfiles vocacionales según rango de edad</p>
     </div>
     <div class="grid-2">
@@ -337,7 +337,7 @@
             {% if seg_edad %}
             <div class="chart-container" style="height:240px;"><canvas id="chartEdadInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
         <div class="card">
@@ -345,7 +345,7 @@
             {% if seg_edad_perfiles %}
             <div class="chart-container" style="height:240px;"><canvas id="chartPerfilesEdadInforme"></canvas></div>
             {% else %}
-            <div class="empty-state" style="padding:2rem;"><p>Sin datos disponibles</p></div>
+            <div class="empty-state"><p>Sin datos disponibles</p></div>
             {% endif %}
         </div>
     </div>
@@ -355,7 +355,7 @@
     <!-- ── Evolución Vocacional (investigador y bienestar; directivo la ve arriba) ── -->
     {% if rol != 'directivo' %}
     <div class="page-header" style="margin-top: 2.5rem;">
-        <h2 style="font-size: 1.25rem;">Evolución Vocacional Institucional</h2>
+        <h2>Evolución Vocacional Institucional</h2>
         <p>Cómo han cambiado los perfiles Holland en la institución a lo largo del tiempo</p>
     </div>
     <div class="card" style="margin-bottom: 2rem;">
