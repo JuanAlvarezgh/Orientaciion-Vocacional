@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Plataforma de Orientación Vocacional para Bachilleres">
     <title>{% block title %}Orientación Vocacional{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Red+Hat+Display:wght@400..900&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo-usb-marca.png') }}">
     <meta name="theme-color" content="#ffffff">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% if request.path.startswith('/admin') %}<script src="{{ url_for('static', filename='js/graficas.js') }}"></script>{% endif %}
     {% block head %}{% endblock %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
@@ -203,6 +207,28 @@
         setTimeout(showSessionWarning, SESSION_MS - WARN_BEFORE_MS);
     })();
     {% endif %}
+    </script>
+    <script>
+    // Entrada suave de las tarjetas al aparecer en pantalla (solo entrada; el
+    // hover lo maneja el CSS). Se saltan las tarjetas con gráfica para no
+    // interferir con el dibujo de Chart.js, y se respeta prefers-reduced-motion.
+    (function () {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const objetivos = Array.prototype.slice
+            .call(document.querySelectorAll('.container > .card, .container > .grid-2 > .card, .container > .stats-grid > .card'))
+            .filter(function (el) { return !el.querySelector('canvas'); });
+        if (!('IntersectionObserver' in window) || !objetivos.length) return;
+        const io = new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (e, i) {
+                if (e.isIntersecting) {
+                    const el = e.target;
+                    setTimeout(function () { el.classList.add('in'); }, Math.min(i, 6) * 55);
+                    io.unobserve(el);
+                }
+            });
+        }, { threshold: 0.08 });
+        objetivos.forEach(function (el) { el.classList.add('reveal'); io.observe(el); });
+    })();
     </script>
     {% block scripts %}{% endblock %}
 </body>
