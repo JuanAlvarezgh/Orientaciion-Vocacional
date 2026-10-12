@@ -1798,7 +1798,7 @@ html, body { overflow-x: clip; }
 }
 .definicion p { margin: 0; color: var(--text-primary); }
 .definicion b { font-family: var(--font-head); }
-.definicion img { width: 110px; flex: none; }
+.definicion img { width: 170px; flex: none; }
 
 .areas-grid { align-items: start; }
 
