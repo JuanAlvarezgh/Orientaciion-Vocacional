@@ -1,19 +1,42 @@
 """Servicio de generación de reportes PDF."""
 
 import os
-import io
 from datetime import datetime
+from xml.sax.saxutils import escape
+
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.graphics.shapes import Drawing, Rect, String, Line
-from reportlab.graphics.charts.barcharts import VerticalBarChart
-from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics import renderPDF
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, KeepTogether,
+)
+
 from ..extensions import db
 from ..models.resultado import PerfilVocacional, Reporte
+from .psicometrico_service import PsicometricoService
+from .reporte_graficos import COLOR_AREA, Cuadros, Luz
+from .reporte_respuestas import filas_de_aplicacion
+
+AREAS = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional']
+MASCOTA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'recursos', 'mascota')
+MASCOTA_POR_PERFIL = {
+    'Realista': 'realista', 'Investigador': 'investigador', 'Artístico': 'artistico',
+    'Social': 'social', 'Emprendedor': 'emprendedor', 'Convencional': 'convencional',
+}
+TINTA = colors.HexColor('#1c1b22')
+GRIS = colors.HexColor('#6f6b80')
+LINEA = colors.HexColor('#ece8e1')
+ACENTO = colors.HexColor('#a35200')
+# Márgenes de 0.8 in y el relleno de 6 pt a cada lado que deja el marco de reportlab.
+ANCHO_UTIL = letter[0] - 1.6 * inch - 12
+
+
+def ruta_mascota(perfil_principal):
+    """Zorro del perfil principal; el de por defecto si el perfil no tiene uno."""
+    ruta = os.path.join(MASCOTA_DIR, MASCOTA_POR_PERFIL.get(perfil_principal, 'default') + '.png')
+    return ruta if os.path.exists(ruta) else os.path.join(MASCOTA_DIR, 'default.png')
 
 
 class ReporteService:
@@ -21,291 +44,196 @@ class ReporteService:
 
     REPORTES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'reportes')
 
-    RIASEC_COLORS_RL = [
-        colors.HexColor('#4f46e5'),
-        colors.HexColor('#0d9488'),
-        colors.HexColor('#f59e0b'),
-        colors.HexColor('#ef4444'),
-        colors.HexColor('#8b5cf6'),
-        colors.HexColor('#06b6d4'),
-    ]
+    @staticmethod
+    def _estilos():
+        base = getSampleStyleSheet()['Normal']
+
+        def estilo(nombre, **kw):
+            opciones = dict(fontName='Helvetica', fontSize=9, leading=12, textColor=TINTA)
+            opciones.update(kw)
+            return ParagraphStyle(nombre, parent=base, **opciones)
+
+        return {
+            'eyebrow': estilo('Eyebrow', fontSize=8, leading=10, textColor=ACENTO),
+            'nombre': estilo('Nombre', fontName='Helvetica-Bold', fontSize=17, leading=21, spaceAfter=6),
+            'etiqueta': estilo('Etiqueta', textColor=GRIS),
+            'dato': estilo('Dato'),
+            'h2': estilo('H2', fontName='Helvetica-Bold', fontSize=12, leading=15, spaceBefore=6, spaceAfter=2),
+            'ayuda': estilo('Ayuda', fontSize=7.8, leading=10, textColor=GRIS, spaceAfter=5),
+            'num': estilo('Num', fontSize=8, textColor=GRIS),
+            'fila': estilo('Fila', fontSize=8.5, leading=10.5),
+            'letra': estilo('Letra', fontName='Helvetica-Bold', alignment=TA_CENTER),
+            'subtotal': estilo('Subtotal', fontSize=7.8, leading=10, alignment=TA_CENTER),
+            'perfil': estilo('Perfil', fontName='Helvetica-Bold', fontSize=16, leading=20),
+            'texto': estilo('Texto', fontSize=9.5, leading=13.5, spaceBefore=4),
+            'pie': estilo('Pie', fontSize=7.5, leading=10, textColor=GRIS),
+        }
 
     @staticmethod
-    def _grafico_barras_holland(puntajes_por_area: dict, width: float = 450, height: float = 200) -> Drawing:
-        """Crea un gráfico de barras horizontal con los puntajes Holland RIASEC."""
-        areas = list(puntajes_por_area.keys())
-        valores = [puntajes_por_area[a].get('normalizado', 0) for a in areas]
-
-        drawing = Drawing(width, height)
-
-        # Fondo
-        drawing.add(Rect(0, 0, width, height, fillColor=colors.HexColor('#f8fafc'), strokeColor=None))
-
-        bar_height = min(20, (height - 30) / max(len(areas), 1))
-        y_step = (height - 30) / max(len(areas), 1)
-        label_width = 100
-        bar_area_width = width - label_width - 60
-
-        for i, (area, valor) in enumerate(zip(areas, valores)):
-            y = height - 20 - (i + 0.5) * y_step
-            bar_w = (valor / 100) * bar_area_width
-
-            col = ReporteService.RIASEC_COLORS_RL[i % len(ReporteService.RIASEC_COLORS_RL)]
-
-            # Barra de fondo gris
-            drawing.add(Rect(label_width, y - bar_height / 2, bar_area_width, bar_height,
-                            fillColor=colors.HexColor('#e2e8f0'), strokeColor=None))
-            # Barra de valor
-            if bar_w > 0:
-                drawing.add(Rect(label_width, y - bar_height / 2, bar_w, bar_height,
-                                fillColor=col, strokeColor=None))
-
-            # Etiqueta área
-            drawing.add(String(label_width - 4, y - 5, area,
-                               fontName='Helvetica-Bold', fontSize=8,
-                               fillColor=colors.HexColor('#2d3748'),
-                               textAnchor='end'))
-
-            # Porcentaje
-            drawing.add(String(label_width + bar_area_width + 4, y - 5, f'{valor:.0f}%',
-                               fontName='Helvetica-Bold', fontSize=8,
-                               fillColor=col, textAnchor='start'))
-
-        # Líneas de referencia (25%, 50%, 75%, 100%)
-        for pct in [25, 50, 75, 100]:
-            x = label_width + (pct / 100) * bar_area_width
-            drawing.add(Line(x, 0, x, height - 20,
-                            strokeColor=colors.HexColor('#cbd5e0'), strokeWidth=0.5,
-                            strokeDashArray=[3, 3]))
-            drawing.add(String(x, 2, f'{pct}%',
-                               fontName='Helvetica', fontSize=6,
-                               fillColor=colors.HexColor('#94a3b8'),
-                               textAnchor='middle'))
-
-        return drawing
+    def _encabezado(usuario, aplicacion, perfil, dj, st):
+        """Datos del estudiante a la izquierda y su zorro a la derecha."""
+        fecha = aplicacion.fecha_fin or aplicacion.fecha_inicio
+        filas = [
+            ('Documento', f'{usuario.tipo_documento or ""} {usuario.documento or "N/A"}'.strip()),
+            ('Institución', usuario.grado.nombre if usuario.grado else 'No especificada'),
+            ('Grado', f'{usuario.semestre}°' if usuario.semestre else 'N/A'),
+            ('Fecha', fecha.strftime('%d/%m/%Y') if fecha else 'N/A'),
+            ('Código RIASEC', dj.get('codigo_riasec') or '—'),
+        ]
+        datos = Table(
+            [[Paragraph(etq, st['etiqueta']), Paragraph(escape(str(val)), st['dato'])] for etq, val in filas],
+            colWidths=[1.15 * inch, 3.2 * inch],
+        )
+        datos.setStyle(TableStyle([
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
+        ]))
+        izquierda = [
+            Paragraph('Informe de orientación vocacional', st['eyebrow']),
+            Paragraph(escape(f'{usuario.nombres} {usuario.apellidos}'), st['nombre']),
+            datos,
+        ]
+        zorro = Image(ruta_mascota(perfil.perfil_principal), width=1.75 * inch, height=1.75 * inch,
+                      kind='proportional')
+        cabecera = Table([[izquierda, zorro]], colWidths=[ANCHO_UTIL - 1.9 * inch, 1.9 * inch])
+        cabecera.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('LINEBELOW', (0, 0), (-1, 0), 0.8, LINEA),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        return cabecera
 
     @staticmethod
-    def _grafico_pastel_perfiles(perfil_principal: str, puntajes_por_area: dict,
-                                  width: float = 220, height: float = 180) -> Drawing:
-        """Gráfico tipo pastel con distribución de áreas."""
-        areas = list(puntajes_por_area.keys())
-        valores = [max(0.01, puntajes_por_area[a].get('normalizado', 0)) for a in areas]
+    def _subtotales(puntajes, es_interes, st):
+        """Puntos por campo en la prueba, por ejemplo 'Realista 13 de 25'."""
+        clave_p, clave_m = ('interes_puntaje', 'interes_maximo') if es_interes else ('competencia_puntaje', 'competencia_maximo')
+        celdas = []
+        for area in AREAS:
+            d = puntajes.get(area) or {}
+            maximo = d.get(clave_m) or 0
+            if not maximo:
+                continue
+            celdas.append(Paragraph(
+                f'<font color="{COLOR_AREA[area]}"><b>{area}</b></font><br/>{d.get(clave_p, 0)} de {maximo}',
+                st['subtotal']))
+        if not celdas:
+            return Spacer(1, 0)
+        tabla = Table([celdas], colWidths=[ANCHO_UTIL / len(celdas)] * len(celdas))
+        tabla.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8f6f2')),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        return tabla
 
-        drawing = Drawing(width, height)
-        pie = Pie()
-        pie.x = (width - 140) // 2
-        pie.y = (height - 140) // 2
-        pie.width = 140
-        pie.height = 140
-        pie.data = valores
-        pie.labels = [f'{a[:3]}' for a in areas]
-        pie.sideLabels = False
-        pie.simpleLabels = True
-        pie.startAngle = 90
+    @staticmethod
+    def _seccion_respuestas(prueba, es_interes, puntajes, st):
+        """Una fila por pregunta: número, enunciado, letra y su valor dibujado."""
+        if es_interes:
+            titulo = 'Prueba de intereses'
+            ayuda = ('Luz encendida: elegiste la opción A y el punto fue para el campo de la pregunta. '
+                     'Apagada: elegiste la B y el punto fue para el otro campo.')
+        else:
+            titulo = 'Prueba de competencias'
+            ayuda = 'Cuadros sombreados: los puntos que valió tu respuesta, de 1 a 4.'
 
-        for i in range(len(areas)):
-            col = ReporteService.RIASEC_COLORS_RL[i % len(ReporteService.RIASEC_COLORS_RL)]
-            pie.slices[i].fillColor = col
-            pie.slices[i].strokeColor = colors.white
-            pie.slices[i].strokeWidth = 1.5
-            # Resaltar perfil principal
-            if areas[i] == perfil_principal:
-                pie.slices[i].popout = 8
+        datos = []
+        for f in filas_de_aplicacion(prueba):
+            dibujo = Luz(f['valor'], f['area']) if f['tipo'] == 'luz' else Cuadros(f['valor'], f['maximo'], f['area'])
+            datos.append([
+                Paragraph(f"{f['numero']}.", st['num']),
+                Paragraph(escape(f['enunciado']), st['fila']),
+                Paragraph(f['letra'], st['letra']),
+                dibujo,
+            ])
+        elementos = [Paragraph(titulo, st['h2']), Paragraph(ayuda, st['ayuda'])]
+        if datos:
+            tabla = Table(datos, colWidths=[0.35 * inch, ANCHO_UTIL - 2.05 * inch, 0.35 * inch, 1.35 * inch])
+            tabla.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 2.5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
+                ('LEFTPADDING', (0, 0), (-1, -1), 2),
+                ('LINEBELOW', (0, 0), (-1, -1), 0.4, LINEA),
+            ]))
+            elementos.append(tabla)
+        elementos += [Spacer(1, 6), ReporteService._subtotales(puntajes, es_interes, st), Spacer(1, 14)]
+        return elementos
 
-        drawing.add(pie)
-        return drawing
+    @staticmethod
+    def _cierre(perfil, dj, st):
+        """Perfil vocacional al final del informe."""
+        partes = [Paragraph('Perfil vocacional', st['eyebrow']),
+                  Paragraph(escape(perfil.perfil_principal or 'Sin determinar'), st['perfil'])]
+        detalle = []
+        if perfil.perfil_secundario:
+            detalle.append(f'Perfil secundario: {escape(perfil.perfil_secundario)}')
+        if dj.get('codigo_riasec'):
+            detalle.append(f'Código RIASEC {escape(dj["codigo_riasec"])}')
+        if detalle:
+            partes.append(Paragraph(' · '.join(detalle), st['ayuda']))
+        if perfil.descripcion:
+            partes.append(Paragraph(escape(perfil.descripcion), st['texto']))
+        if dj.get('ambiente_trabajo'):
+            partes.append(Paragraph('<b>Ambiente de trabajo ideal:</b> ' + escape(dj['ambiente_trabajo']), st['texto']))
+        partes += [Spacer(1, 12), Paragraph(
+            'Este informe es una herramienta de orientación y no un diagnóstico definitivo. '
+            'Se recomienda revisarlo con el orientador de tu colegio o con Bienestar de la USB.', st['pie'])]
+        return KeepTogether(partes)
 
     @staticmethod
     def generar_reporte_individual(perfil_id: int, generado_por: int = None) -> Reporte:
-        """Genera un reporte PDF individual para un perfil vocacional."""
+        """Informe del estudiante: datos y zorro, cada respuesta con lo que valió y el perfil."""
         perfil = PerfilVocacional.query.get_or_404(perfil_id)
         aplicacion = perfil.aplicacion
         usuario = aplicacion.usuario
+        dj = perfil.datos_json or {}
+        puntajes = dj.get('puntajes_por_area', {})
 
-        # Crear directorio de reportes si no existe
         os.makedirs(ReporteService.REPORTES_DIR, exist_ok=True)
-
-        # Nombre del archivo
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
         filename = f'reporte_{usuario.documento or usuario.id}_{timestamp}.pdf'
         filepath = os.path.join(ReporteService.REPORTES_DIR, filename)
 
-        # Crear el PDF
+        nombre = f'{usuario.nombres} {usuario.apellidos}'
         doc = SimpleDocTemplate(filepath, pagesize=letter,
-                                topMargin=0.75*inch, bottomMargin=0.75*inch)
-        styles = getSampleStyleSheet()
+                                topMargin=0.7 * inch, bottomMargin=0.8 * inch,
+                                leftMargin=0.8 * inch, rightMargin=0.8 * inch,
+                                title=f'Informe vocacional - {nombre}')
+        st = ReporteService._estilos()
 
-        # Estilos personalizados
-        titulo_style = ParagraphStyle(
-            'TituloReporte', parent=styles['Title'],
-            fontSize=20, textColor=colors.HexColor('#1a365d'),
-            spaceAfter=20,
-        )
-        subtitulo_style = ParagraphStyle(
-            'Subtitulo', parent=styles['Heading2'],
-            fontSize=14, textColor=colors.HexColor('#2d3748'),
-            spaceBefore=15, spaceAfter=10,
-        )
-        normal_style = ParagraphStyle(
-            'NormalCustom', parent=styles['Normal'],
-            fontSize=11, leading=16,
-        )
+        elements = [ReporteService._encabezado(usuario, aplicacion, perfil, dj, st), Spacer(1, 12)]
 
-        elements = []
+        # Las dos pruebas de la sesión: la de esta aplicación y su complementaria.
+        # Intereses va primero, como en el cuestionario.
+        def nombre_dimension(a):
+            d = a.configuracion.instrumento.dimensiones.first()
+            return d.nombre if d else ''
 
-        # Encabezado
-        elements.append(Paragraph('REPORTE DE ORIENTACIÓN VOCACIONAL', titulo_style))
-        elements.append(Paragraph('Plataforma de Orientación Vocacional para Bachilleres', styles['Normal']))
-        elements.append(Spacer(1, 20))
+        complementaria = PsicometricoService._obtener_aplicacion_complementaria(aplicacion)
+        pruebas = [a for a in (aplicacion, complementaria) if a]
+        pruebas.sort(key=lambda a: 0 if PsicometricoService._es_interes(nombre_dimension(a)) else 1)
+        for prueba in pruebas:
+            es_interes = PsicometricoService._es_interes(nombre_dimension(prueba))
+            elements += ReporteService._seccion_respuestas(prueba, es_interes, puntajes, st)
 
-        # Datos del estudiante
-        elements.append(Paragraph('Datos del Estudiante', subtitulo_style))
-        datos_estudiante = [
-            ['Nombre:', f'{usuario.nombres} {usuario.apellidos}'],
-            ['Documento:', f'{usuario.tipo_documento} {usuario.documento or "N/A"}'],
-            ['Institución:', usuario.grado.nombre if usuario.grado else 'No especificada'],
-            ['Grado:', str(usuario.semestre) + '°' if usuario.semestre else 'N/A'],
-            ['Fecha de aplicación:', aplicacion.fecha_inicio.strftime('%d/%m/%Y %H:%M') if aplicacion.fecha_inicio else 'N/A'],
-        ]
-        tabla_datos = Table(datos_estudiante, colWidths=[2*inch, 4*inch])
-        tabla_datos.setStyle(TableStyle([
-            ('FONT', (0, 0), (0, -1), 'Helvetica-Bold', 10),
-            ('FONT', (1, 0), (1, -1), 'Helvetica', 10),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#4a5568')),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ]))
-        elements.append(tabla_datos)
-        elements.append(Spacer(1, 20))
+        elements.append(ReporteService._cierre(perfil, dj, st))
 
-        # Perfil Vocacional Principal
-        elements.append(Paragraph('Perfil Vocacional', subtitulo_style))
-        elements.append(Paragraph(
-            f'<b>Perfil Principal:</b> {perfil.perfil_principal}', normal_style
-        ))
-        if perfil.perfil_secundario:
-            elements.append(Paragraph(
-                f'<b>Perfil Secundario:</b> {perfil.perfil_secundario}', normal_style
-            ))
-        elements.append(Spacer(1, 10))
+        def pie_de_pagina(canvas, doc_):
+            canvas.saveState()
+            canvas.setFont('Helvetica', 7.5)
+            canvas.setFillColor(GRIS)
+            canvas.drawString(doc_.leftMargin, 0.45 * inch,
+                              f'{nombre} · Informe de orientación vocacional · Universidad de San Buenaventura Medellín')
+            canvas.drawRightString(letter[0] - doc_.rightMargin, 0.45 * inch, f'Página {doc_.page}')
+            canvas.restoreState()
 
-        if perfil.descripcion:
-            elements.append(Paragraph(perfil.descripcion, normal_style))
-        elements.append(Spacer(1, 15))
+        doc.build(elements, onFirstPage=pie_de_pagina, onLaterPages=pie_de_pagina)
 
-        # ── Gráfico de Perfil Holland RIASEC ──────────────────────────────
-        if perfil.datos_json and 'puntajes_por_area' in perfil.datos_json:
-            puntajes_por_area = perfil.datos_json['puntajes_por_area']
-
-            elements.append(Paragraph('Perfil Holland RIASEC — Resultados por Área', subtitulo_style))
-
-            # Gráfico de barras horizontal
-            grafico_barras = ReporteService._grafico_barras_holland(puntajes_por_area, width=450, height=210)
-            elements.append(grafico_barras)
-            elements.append(Spacer(1, 12))
-
-            # Tabla resumen de áreas
-            tabla_areas = [['Área Holland', 'Puntaje (%)', 'Nivel', 'Perfil']]
-            for area, datos in sorted(puntajes_por_area.items(), key=lambda x: x[1].get('normalizado', 0), reverse=True):
-                pn = datos.get('normalizado', 0)
-                if pn >= 80:
-                    nivel = 'Muy Alto'
-                elif pn >= 60:
-                    nivel = 'Alto'
-                elif pn >= 40:
-                    nivel = 'Medio'
-                else:
-                    nivel = 'Bajo'
-                es_principal = '★ Principal' if area == perfil.perfil_principal else (
-                    '● Secundario' if area == perfil.perfil_secundario else ''
-                )
-                tabla_areas.append([area, f'{pn:.1f}%', nivel, es_principal])
-
-            t_areas = Table(tabla_areas, colWidths=[1.8*inch, 1.2*inch, 1*inch, 1.5*inch])
-            t_areas.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold', 9),
-                ('FONT', (0, 1), (-1, -1), 'Helvetica', 9),
-                ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f4ff')]),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('TOPPADDING', (0, 0), (-1, -1), 6),
-                ('TEXTCOLOR', (3, 1), (3, -1), colors.HexColor('#4f46e5')),
-                ('FONT', (3, 1), (3, -1), 'Helvetica-Bold', 8),
-            ]))
-            elements.append(t_areas)
-            elements.append(Spacer(1, 20))
-
-        # ── Gráfico de barras por escala (detalle) ────────────────────────
-        if perfil.datos_json and 'puntajes_escala' in perfil.datos_json:
-            elements.append(Paragraph('Resultados por Escala — Detalle', subtitulo_style))
-
-            puntajes = perfil.datos_json['puntajes_escala']
-
-            # Tabla de resultados
-            tabla_resultados = [['Escala', 'Dimensión', 'Puntaje (%)', 'Nivel']]
-            for nombre, datos in puntajes.items():
-                pn = datos['puntaje_normalizado']
-                if pn >= 80:
-                    nivel = 'Muy Alto'
-                elif pn >= 60:
-                    nivel = 'Alto'
-                elif pn >= 40:
-                    nivel = 'Medio'
-                else:
-                    nivel = 'Bajo'
-                tabla_resultados.append([nombre, datos['dimension'], f"{pn:.1f}%", nivel])
-
-            t = Table(tabla_resultados, colWidths=[2*inch, 1.5*inch, 1*inch, 1*inch])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2d3748')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold', 9),
-                ('FONT', (0, 1), (-1, -1), 'Helvetica', 9),
-                ('ALIGN', (2, 0), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f7fafc')]),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ]))
-            elements.append(t)
-            elements.append(Spacer(1, 20))
-
-        # Fortalezas
-        elements.append(Paragraph('Fortalezas Identificadas', subtitulo_style))
-        for linea in (perfil.fortalezas or '').split('\n'):
-            if linea.strip():
-                elements.append(Paragraph(linea, normal_style))
-        elements.append(Spacer(1, 10))
-
-        # Áreas de desarrollo
-        elements.append(Paragraph('Áreas de Desarrollo', subtitulo_style))
-        for linea in (perfil.areas_desarrollo or '').split('\n'):
-            if linea.strip():
-                elements.append(Paragraph(linea, normal_style))
-        elements.append(Spacer(1, 10))
-
-        # Recomendaciones
-        elements.append(Paragraph('Recomendaciones', subtitulo_style))
-        for linea in (perfil.recomendaciones or '').split('\n'):
-            if linea.strip():
-                elements.append(Paragraph(linea, normal_style))
-        elements.append(Spacer(1, 20))
-
-        # Pie de página
-        elements.append(Paragraph(
-            f'<i>Reporte generado automáticamente el {datetime.utcnow().strftime("%d/%m/%Y %H:%M")}. '
-            'Este reporte es una herramienta de orientación y no constituye un diagnóstico definitivo. '
-            'Se recomienda consultar con el orientador escolar o consejero de tu institución educativa.</i>',
-            ParagraphStyle('Pie', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
-        ))
-
-        # Generar PDF
-        doc.build(elements)
-
-        # Registrar reporte en BD
         reporte = Reporte(
             perfil_id=perfil_id,
             tipo='individual',
