@@ -2,6 +2,10 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from ..utils import api_request, api_requests_parallel, api_request_file, jwt_is_expired
+from ..programas_usb import (
+    programas_con_afinidad, programas_por_afinidad, definicion_perfil,
+    sesiones_distintas, recomendaciones_accionables,
+)
 
 estudiante_routes = Blueprint('estudiante', __name__)
 
@@ -431,6 +435,7 @@ def explorador(aplicacion_id):
     return render_template('estudiante/explorador.html',
                            perfil=perfil,
                            puntajes=comparativo,
+                           programas=programas_con_afinidad(comparativo),
                            aplicacion_id=aplicacion_id)
 
 

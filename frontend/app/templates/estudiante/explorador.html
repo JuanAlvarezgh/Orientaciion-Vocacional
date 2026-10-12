@@ -180,41 +180,10 @@ const CX = 250, CY = 250, RADIO = 178;
 const VERT = {};
 CLAVES.forEach(k => { const a = ANGULO[k] * Math.PI / 180; VERT[k] = { x: Math.cos(a), y: Math.sin(a) }; });
 
-// Pregrados de la USB Medellín. Perfil RIASEC estimado de cada programa (0-10).
+// Pregrados de la USB con su afinidad ya calculada en el servidor
+// (frontend/app/programas_usb.py), la misma que usa la página de resultados.
 const BASE = 'https://usbmed.edu.co/programas/pregrados/';
-const PROGRAMAS = [
-  { n: 'Licenciatura en Educación Física y Deporte', f: 'Educación', s: { R: 8, I: 3, A: 3, S: 8, E: 5, C: 3 }, u: 'licenciatura-en-educacion-fisica-y-deporte', d: 'Formación de docentes y gestores del deporte, la educación física y la promoción de la salud.' },
-  { n: 'Tecnología en Entrenamiento Deportivo', f: 'Educación', s: { R: 9, I: 4, A: 2, S: 6, E: 5, C: 4 }, u: 'tecnologia-en-entrenamiento-deportivo', d: 'Diseño, aplicación y evaluación de planes de entrenamiento deportivo.' },
-  { n: 'Licenciatura en Educación Infantil', f: 'Educación', s: { R: 2, I: 4, A: 7, S: 9, E: 3, C: 4 }, u: 'licenciatura-en-educacion-infantil', d: 'Acompañamiento del desarrollo integral de niñas y niños en la primera infancia.' },
-  { n: 'Administración de Negocios', f: 'Ciencias Empresariales', s: { R: 2, I: 4, A: 3, S: 5, E: 9, C: 7 }, u: 'administracion-de-negocios', d: 'Dirección y transformación de organizaciones, con enfoque en emprendimiento e innovación.' },
-  { n: 'Contaduría Pública', f: 'Ciencias Empresariales', s: { R: 1, I: 5, A: 1, S: 3, E: 5, C: 10 }, u: 'contaduria-publica', d: 'Gestión de la información financiera y contable de las organizaciones.' },
-  { n: 'Negocios Internacionales', f: 'Ciencias Empresariales', s: { R: 2, I: 4, A: 3, S: 6, E: 9, C: 6 }, u: 'negocios-internacionales', d: 'Internacionalización de empresas y búsqueda de oportunidades en mercados globales.' },
-  { n: 'Arquitectura', f: 'Artes Integradas', s: { R: 6, I: 6, A: 9, S: 3, E: 4, C: 5 }, u: 'arquitectura', d: 'Diseño y gestión de proyectos arquitectónicos y del espacio habitable.' },
-  { n: 'Diseño de Modas', f: 'Artes Integradas', s: { R: 5, I: 3, A: 10, S: 4, E: 6, C: 3 }, u: 'diseno-de-modas', d: 'Ideación, diseño y producción de colecciones y líneas de ropa.' },
-  { n: 'Diseño Industrial', f: 'Artes Integradas', s: { R: 8, I: 6, A: 8, S: 3, E: 4, C: 4 }, u: 'diseno-industrial', d: 'Creación de productos que mejoran el entorno y el bienestar de las personas.' },
-  { n: 'Creación de Contenidos Digitales', f: 'Ingenierías', s: { R: 3, I: 4, A: 9, S: 6, E: 7, C: 3 }, u: 'creacion-de-contenidos-digitales', d: 'Producción de contenido digital para redes, marcas y medios.' },
-  { n: 'Ingeniería Ambiental', f: 'Ingenierías', s: { R: 8, I: 8, A: 2, S: 5, E: 3, C: 5 }, u: 'ingenieria-ambiental', d: 'Soluciones técnicas para el desarrollo sostenible y el cuidado del ambiente.' },
-  { n: 'Ingeniería de Datos y Software', f: 'Ingenierías', s: { R: 4, I: 9, A: 3, S: 2, E: 4, C: 8 }, u: 'ingenieria-de-datos-y-software', d: 'Desarrollo de software y gestión de datos para la industria.' },
-  { n: 'Ingeniería de Sistemas Cibernéticos', f: 'Ingenierías', s: { R: 7, I: 9, A: 4, S: 2, E: 4, C: 6 }, u: 'ingenieria-de-sistemas-ciberneticos', d: 'Inteligencia artificial, robótica e internet de las cosas.' },
-  { n: 'Ingeniería de Sonido', f: 'Ingenierías', s: { R: 7, I: 7, A: 8, S: 3, E: 3, C: 4 }, u: 'ingenieria-de-sonido', d: 'Acústica, producción musical y sonido para medios audiovisuales.' },
-  { n: 'Ingeniería Industrial', f: 'Ingenierías', s: { R: 6, I: 6, A: 2, S: 4, E: 7, C: 8 }, u: 'ingenieria-industrial', d: 'Mejora de procesos, producción, logística y gestión del talento.' },
-  { n: 'Ingeniería Multimedia', f: 'Ingenierías', s: { R: 5, I: 6, A: 9, S: 3, E: 5, C: 4 }, u: 'ingenieria-multimedia', d: 'Animación, videojuegos, realidad virtual y aumentada, y medios audiovisuales.' },
-  { n: 'Derecho', f: 'Derecho', s: { R: 1, I: 5, A: 3, S: 7, E: 9, C: 6 }, u: 'derecho', d: 'Formación de abogados con énfasis en la justicia social.' },
-  { n: 'Psicología', f: 'Psicología', s: { R: 1, I: 8, A: 5, S: 10, E: 4, C: 4 }, u: 'psicologia', d: 'Comprensión del comportamiento humano y acompañamiento a personas y grupos.' },
-].map((p, i) => Object.assign(p, { id: i }));
-
-// Afinidad: correlación entre la forma del perfil del estudiante y la del programa,
-// llevada a 0-100. Compara qué campos destacan más que otros (la lógica de Holland);
-// la similitud de coseno con puntajes todos positivos daba 70-95 % a casi todo.
-function afinidad(p) {
-  const a = CLAVES.map(k => PUNTAJES[k]), b = CLAVES.map(k => p.s[k]);
-  const ma = a.reduce((x, y) => x + y, 0) / 6, mb = b.reduce((x, y) => x + y, 0) / 6;
-  let num = 0, da = 0, db = 0;
-  for (let i = 0; i < 6; i++) { num += (a[i] - ma) * (b[i] - mb); da += (a[i] - ma) ** 2; db += (b[i] - mb) ** 2; }
-  if (!da || !db) return 50;
-  return Math.round((num / Math.sqrt(da * db) + 1) / 2 * 100);
-}
-PROGRAMAS.forEach(p => { p.af = afinidad(p); });
+const PROGRAMAS = {{ programas | tojson }}.map((p, i) => Object.assign(p, { id: i }));
 
 // Escala ordinal de un solo tono (validada): más oscuro = más afín
 function colorAfinidad(v) { return v >= 80 ? '#7a3a00' : v >= 65 ? '#b85a00' : v >= 50 ? '#e07b1f' : '#e9a15c'; }
