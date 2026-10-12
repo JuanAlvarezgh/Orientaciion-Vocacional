@@ -1762,3 +1762,73 @@ h1, h2, h3, h4 { color: var(--primary); letter-spacing: -0.01em; }
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 .empty-state .ev-codigo { font-size: var(--fs-hero); line-height: 1; margin: 0; }
+
+/* ══ CAPÍTULOS DE RESULTADOS ══════════════════════════════════════════════
+   Barra fija con los cinco capítulos, nota de definición del perfil,
+   afinidad en las tarjetas de programas y los pasos de "Qué sigue". */
+/* html y body tenían overflow-x: hidden; con los dos así, body se vuelve su propio
+   contenedor de scroll y ningún position: sticky funciona (ni el encabezado, ni la
+   barra del cuestionario, ni esta). "clip" recorta igual sin crear ese contenedor;
+   los navegadores que no lo conocen se quedan con hidden. */
+html, body { overflow-x: clip; }
+
+.cap-nav {
+    position: sticky; top: 64px; z-index: 20;
+    display: flex; gap: 0.25rem; overflow-x: auto; scrollbar-width: none;
+    margin: 0 0 1.5rem; padding: 0.5rem 0;
+    background: var(--bg-main); border-bottom: 1px solid var(--border);
+}
+.cap-nav::-webkit-scrollbar { display: none; }
+.cap-nav a {
+    flex: none; padding: 0.45rem 0.9rem; border-radius: 999px;
+    font-size: var(--fs-sm); font-weight: 600; color: var(--text-secondary); text-decoration: none;
+}
+.cap-nav a:hover { color: var(--primary); background: var(--orange-soft); }
+.cap-nav a.activo { color: var(--accent-text); background: var(--orange-soft); }
+
+.capitulo { scroll-margin-top: 130px; margin-bottom: 2.5rem; }
+.capitulo > * + * { margin-top: 1.25rem; }
+
+.perfil-texto p { color: var(--text-secondary); line-height: var(--lh-body); max-width: var(--measure); }
+
+.definicion {
+    display: flex; gap: 1rem; align-items: center;
+    padding: 1rem 1.25rem; border-radius: var(--card-radius);
+    background: var(--orange-soft); font-size: var(--fs-sm); line-height: var(--lh-body);
+}
+.definicion p { margin: 0; color: var(--text-primary); }
+.definicion b { font-family: var(--font-head); }
+.definicion img { width: 110px; flex: none; }
+
+.areas-grid { align-items: start; }
+
+.programa-af { font-family: var(--font-head); font-weight: 800; font-size: 1.15rem; color: var(--accent-text); }
+.enlace-mapa { display: inline-block; margin-top: 1rem; font-weight: 600; color: var(--accent-text); text-decoration: none; }
+.enlace-mapa:hover { text-decoration: underline; }
+
+.nota-recomendacion { margin: 1rem 0 0; color: var(--text-secondary); font-size: var(--fs-sm); }
+
+.siguiente { display: flex; gap: 1.5rem; align-items: center; }
+.siguiente-fox { width: 150px; flex: none; }
+.siguiente-pasos {
+    list-style: none; margin: 0; padding: 0; flex: 1; counter-reset: paso;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;
+}
+.siguiente-pasos > li { counter-increment: paso; }
+.paso {
+    display: flex; flex-direction: column; gap: 0.3rem; height: 100%; box-sizing: border-box;
+    padding: 1rem; border: 1px solid var(--border); border-radius: var(--card-radius);
+    color: var(--text-secondary); text-decoration: none; font-size: var(--fs-sm); line-height: 1.45;
+}
+.paso::before { content: counter(paso); font-family: var(--font-head); font-weight: 800; color: var(--accent-text); }
+a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
+.paso b { color: var(--primary); font-family: var(--font-head); font-size: var(--fs-body); }
+.nota-repetir { margin: 1rem 0 0; color: var(--text-secondary); font-size: var(--fs-sm); }
+
+.acciones-resultados { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-top: 2rem; }
+
+@media (max-width: 640px) {
+    .siguiente { flex-direction: column; }
+    .siguiente-fox { width: 120px; }
+    .definicion { flex-direction: column; text-align: center; }
+}
