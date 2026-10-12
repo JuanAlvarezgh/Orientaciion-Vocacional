@@ -333,14 +333,27 @@ def resultados(aplicacion_id):
     if perfil.get('datos_json'):
         perfil['datos_json']['puntajes_por_area'] = comparativo
 
+    # Evolución y predicción solo tienen sentido con dos sesiones en días
+    # distintos: las pruebas de Intereses y Competencias del mismo día no son
+    # dos momentos en el tiempo.
+    historial = evolucion_data.get('evolucion', {}).get('historial', [])
+    hay_sesiones = sesiones_distintas(historial) >= 2
+    # Perfiles antiguos sin puntajes: _unificar_puntajes_riasec devuelve todo en
+    # cero, y eso daría 50 % de afinidad a todos y un falso "perfil equilibrado".
+    hay_puntajes = bool(puntajes_area or intereses_puntajes or competencias_puntajes)
+
     return render_template('estudiante/resultados.html',
                            perfil=perfil,
                            resultados_dimension=data.get('resultados_dimension', []),
                            aplicacion=data.get('aplicacion'),
                            estudiante=data.get('estudiante'),
-                           evolucion=evolucion_data.get('evolucion', {}).get('historial', []),
-                           mutaciones=evolucion_data.get('mutaciones', []),
-                           prediccion=evolucion_data.get('prediccion', {}))
+                           programas=programas_por_afinidad(comparativo)[:8] if hay_puntajes else [],
+                           definicion=definicion_perfil(comparativo) if hay_puntajes else None,
+                           recomendaciones=recomendaciones_accionables(
+                               perfil.get('recomendaciones'), perfil.get('descripcion')),
+                           evolucion=historial if hay_sesiones else [],
+                           mutaciones=evolucion_data.get('mutaciones', []) if hay_sesiones else [],
+                           prediccion=evolucion_data.get('prediccion', {}) if hay_sesiones else {})
 
 
 @estudiante_routes.route('/descargar-reporte/<int:aplicacion_id>')
