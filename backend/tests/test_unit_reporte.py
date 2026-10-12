@@ -63,3 +63,20 @@ def test_cuadros_y_luz_se_dibujan_en_un_pdf():
 def test_cuadros_limitan_el_valor_al_maximo():
     assert Cuadros(7, 4, 'Realista').valor == 4
     assert Cuadros(-1, 4, 'Realista').valor == 0
+
+
+def test_porcentaje_combinado_suma_puntos_de_las_dos_pruebas():
+    from app.services.reporte_respuestas import porcentajes_area
+    d = {'interes_puntaje': 13, 'interes_maximo': 25, 'competencia_puntaje': 23, 'competencia_maximo': 32}
+    assert porcentajes_area(d) == (63, 52, 72)
+    assert porcentajes_area({'interes_puntaje': 5, 'interes_maximo': 10}) == (50, 50, None)
+    assert porcentajes_area({}) == (0, None, None)
+
+
+def test_barras_de_areas_se_dibujan():
+    from reportlab.platypus import SimpleDocTemplate
+    from app.services.reporte_graficos import BarrasAreas
+    buf = io.BytesIO()
+    filas = [('Realista', 63, 52, 72), ('Social', 60, 45, None), ('Área rara', 0, None, None)]
+    SimpleDocTemplate(buf).build([BarrasAreas(filas, 400)])
+    assert buf.getvalue().startswith(b'%PDF')

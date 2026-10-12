@@ -59,3 +59,21 @@ def filas_de_aplicacion(aplicacion):
 
     valores = {r.item_id: r.valor for r in Respuesta.query.filter_by(aplicacion_id=aplicacion.id)}
     return [fila_respuesta(n, item, valores.get(item.id)) for n, item in enumerate(items, start=1)]
+
+
+def _entero(x):
+    """Redondeo .5 hacia arriba, como el filtro round de Jinja en la página."""
+    return int(x + 0.5)
+
+
+def porcentajes_area(d):
+    """(combinado, intereses, competencias) en % para un campo, con el mismo
+    cálculo de la página de resultados: el combinado suma los puntos de las dos
+    pruebas sobre la suma de sus máximos. None si esa prueba no se presentó."""
+    d = d or {}
+    ip, im = d.get('interes_puntaje') or 0, d.get('interes_maximo') or 0
+    cp, cm = d.get('competencia_puntaje') or 0, d.get('competencia_maximo') or 0
+    intereses = _entero(ip / im * 100) if im else None
+    competencias = _entero(cp / cm * 100) if cm else None
+    combinado = _entero((ip + cp) / (im + cm) * 100) if (im + cm) else 0
+    return combinado, intereses, competencias
