@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from ..utils import api_request, api_requests_parallel, api_request_file, jwt_is_expired
 from ..programas_usb import (
     programas_con_afinidad, programas_por_afinidad, definicion_perfil,
-    sesiones_distintas, recomendaciones_accionables,
+    sesiones_distintas, recomendaciones_accionables, fortalezas_sin_porcentaje,
 )
 
 estudiante_routes = Blueprint('estudiante', __name__)
@@ -349,6 +349,7 @@ def resultados(aplicacion_id):
                            estudiante=data.get('estudiante'),
                            programas=programas_por_afinidad(comparativo)[:8] if hay_puntajes else [],
                            definicion=definicion_perfil(comparativo) if hay_puntajes else None,
+                           fortalezas=fortalezas_sin_porcentaje(perfil.get('fortalezas')),
                            recomendaciones=recomendaciones_accionables(
                                perfil.get('recomendaciones'), perfil.get('descripcion')),
                            evolucion=historial if hay_sesiones else [],

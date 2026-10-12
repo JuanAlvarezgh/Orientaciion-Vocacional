@@ -30,7 +30,7 @@
         <a href="#cap-perfil">Tu perfil</a>
         {% if dj.puntajes_por_area %}<a href="#cap-areas">Tus áreas</a>{% endif %}
         {% if programas %}<a href="#cap-programas">Programas</a>{% endif %}
-        {% if perfil.fortalezas or recomendaciones %}<a href="#cap-fortalezas">Fortalezas</a>{% endif %}
+        {% if fortalezas or recomendaciones %}<a href="#cap-fortalezas">Fortalezas</a>{% endif %}
         <a href="#cap-sigue">Qué sigue</a>
     </nav>
 
@@ -187,15 +187,15 @@
     </section>
     {% endif %}
 
-    {% if perfil.fortalezas or recomendaciones %}
+    {% if fortalezas or recomendaciones %}
     <!-- 4. Fortalezas -->
     <section id="cap-fortalezas" class="capitulo">
         <div class="card">
             <div class="card-header"><h2>Fortalezas</h2></div>
-            {% if perfil.fortalezas %}
+            {% if fortalezas %}
             <ul class="lista-limpia">
-            {% for linea in perfil.fortalezas.splitlines() %}
-                {% if linea.strip() %}<li>{{ linea.strip().lstrip('•').strip() }}</li>{% endif %}
+            {% for area, texto in fortalezas %}
+                <li>{% if area %}<b>{{ area }}:</b> {% endif %}{{ texto }}</li>
             {% endfor %}
             </ul>
             {% endif %}

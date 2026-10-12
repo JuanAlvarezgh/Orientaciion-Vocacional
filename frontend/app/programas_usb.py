@@ -6,6 +6,7 @@ El perfil RIASEC de cada programa (0-10) es una estimación del equipo.
 """
 
 import math
+import re
 
 URL_BASE = 'https://usbmed.edu.co/programas/pregrados/'
 CLAVES = ('R', 'I', 'A', 'S', 'E', 'C')
@@ -114,3 +115,19 @@ def recomendaciones_accionables(texto, descripcion=''):
         l for l in lineas
         if l != (descripcion or '').strip() and not l.startswith(_PREFIJOS_REPETIDOS)
     ]
+
+
+_FORTALEZA = re.compile(r'^(?P<area>[^(:]+?)\s*\(\s*\d+(?:[.,]\d+)?\s*%\s*\)\s*:\s*(?P<texto>.*)$')
+
+
+def fortalezas_sin_porcentaje(texto):
+    """Fortalezas como (campo, descripción), sin el porcentaje que trae el backend:
+    ese número es otro cálculo y no coincide con el de las barras de la página."""
+    salida = []
+    for linea in (texto or '').splitlines():
+        linea = linea.strip().lstrip('•').strip()
+        if not linea:
+            continue
+        m = _FORTALEZA.match(linea)
+        salida.append((m.group('area').strip(), m.group('texto').strip()) if m else ('', linea))
+    return salida

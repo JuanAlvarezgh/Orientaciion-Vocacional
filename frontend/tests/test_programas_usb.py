@@ -94,3 +94,16 @@ def test_recomendaciones_quita_las_repetidas_y_deja_las_accionables():
     assert recomendaciones_accionables(texto, descripcion) == [
         'Aún no has completado la prueba de Intereses; tu perfil integrado se actualizará cuando la realices.',
     ]
+
+
+def test_fortalezas_quitan_el_porcentaje_del_backend():
+    from app.programas_usb import fortalezas_sin_porcentaje
+    texto = ('• Convencional (62%): Organización, precisión\n'
+             '\n'
+             '• Realista (62%): Habilidad manual\n'
+             'Línea sin formato')
+    assert fortalezas_sin_porcentaje(texto) == [
+        ('Convencional', 'Organización, precisión'),
+        ('Realista', 'Habilidad manual'),
+        ('', 'Línea sin formato'),
+    ]
