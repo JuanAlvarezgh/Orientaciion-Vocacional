@@ -171,14 +171,16 @@
         <div class="card">
             <div class="card-header">
                 <h2>Programas en la USB</h2>
-                <span class="rasgos-ayuda">Ordenados por afinidad con tu perfil completo</span>
+                <span class="rasgos-ayuda">Pregrados de la San Buenaventura Medellín relacionados con tus campos más fuertes</span>
             </div>
             <div class="programas-grid">
                 {% for p in programas %}
-                <a class="programa" href="{{ p.url }}" target="_blank" rel="noopener">
-                    <span class="programa-af">{{ p.af }}%</span>
+                <a class="programa{% if p.grupo == 'secundario' %} programa-sec{% endif %}" href="{{ p.url }}" target="_blank" rel="noopener">
                     <span class="programa-nombre">{{ p.n }}</span>
-                    <span class="programa-meta">{{ p.f }} · Ver programa <span aria-hidden="true">&#8599;</span></span>
+                    <span class="programa-meta">
+                        {% if p.grupo == 'principal' %}Perfil {{ perfil.perfil_principal }}{% else %}Perfil secundario {{ perfil.perfil_secundario }}{% endif %}
+                        · Ver programa <span aria-hidden="true">&#8599;</span>
+                    </span>
                 </a>
                 {% endfor %}
             </div>
@@ -217,7 +219,7 @@
                         <b>Explora el mapa</b><span>Compara los 18 pregrados de la USB con tu perfil.</span></a></li>
                     {% if programas %}
                     <li><a class="paso" href="{{ programas[0].url }}" target="_blank" rel="noopener">
-                        <b>Conoce {{ programas[0].n }}</b><span>Tu programa más afín: plan de estudios y requisitos en la página de la USB.</span></a></li>
+                        <b>Conoce {{ programas[0].n }}</b><span>Un programa relacionado con tu perfil {{ perfil.perfil_principal }}: plan de estudios y requisitos en la página de la USB.</span></a></li>
                     {% endif %}
                     <li><div class="paso">
                         <b>Habla con orientación</b><span>Lleva tu informe al orientador de tu colegio o a Bienestar de la USB.</span></div></li>

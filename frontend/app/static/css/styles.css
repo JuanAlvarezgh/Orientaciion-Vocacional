@@ -1802,7 +1802,6 @@ html, body { overflow-x: clip; }
 
 .areas-grid { align-items: start; }
 
-.programa-af { font-family: var(--font-head); font-weight: 800; font-size: 1.15rem; color: var(--accent-text); }
 .enlace-mapa { display: inline-block; margin-top: 1rem; font-weight: 600; color: var(--accent-text); text-decoration: none; }
 .enlace-mapa:hover { text-decoration: underline; }
 

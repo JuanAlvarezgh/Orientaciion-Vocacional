@@ -26,9 +26,7 @@
 }
 .chip-fac:hover { border-color: var(--accent); }
 .chip-fac.activo { background: var(--primary); border-color: var(--primary); color: #fff; }
-.filtro-afinidad { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
-.filtro-afinidad input { width: 110px; accent-color: var(--accent); }
-#compatLabel { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); width: 36px; font-variant-numeric: tabular-nums; }
+.buscar { margin-left: auto; }
 .buscar input {
   font: inherit; font-size: 0.85rem; padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; outline: none; width: 190px;
 }
@@ -36,7 +34,7 @@
 
 /* Distribución */
 .expl-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.25rem; align-items: start; }
-@media (max-width: 920px) { .expl-grid { grid-template-columns: 1fr; } .filtro-afinidad { margin-left: 0; } }
+@media (max-width: 920px) { .expl-grid { grid-template-columns: 1fr; } .buscar { margin-left: 0; } }
 
 .hex-panel { position: relative; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 0.5rem; }
 .hex-panel svg { width: 100%; height: auto; display: block; touch-action: manipulation; }
@@ -60,8 +58,10 @@
 .panel-placeholder { text-align: center; padding: 1.25rem 0.5rem; color: var(--text-secondary); font-size: 0.88rem; }
 .detalle { display: none; }
 .detalle.visible { display: block; }
-.det-compat { font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; color: var(--primary); line-height: 1; }
-.det-compat small { font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-left: 0.25rem; }
+.det-etiqueta { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 0.2rem 0.65rem; }
+.det-etiqueta.principal { background: var(--orange-soft); color: var(--accent-text); }
+.det-etiqueta.secundario { background: #fbf3ea; color: #8a5a1f; }
+.det-etiqueta.otro { background: #f2f1f5; color: var(--text-secondary); }
 .det-nombre { font-family: var(--font-head); font-size: 1.2rem; font-weight: 800; color: var(--primary); margin: 0.6rem 0 0.15rem; }
 .det-fac { font-size: 0.82rem; color: var(--text-secondary); }
 .det-codigos { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.75rem 0; }
@@ -70,19 +70,20 @@
 .det-porque { font-size: 0.85rem; color: var(--text-primary); background: #f6f5f8; border-radius: 10px; padding: 0.6rem 0.75rem; margin: 0.75rem 0; line-height: 1.5; }
 .det-link { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.88rem; }
 
-/* Lista de programas por afinidad (equivale a la tabla del mapa) */
-.lista-prog { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
-.lista-prog li { display: grid; grid-template-columns: 1fr 72px 38px; align-items: center; gap: 0.6rem; padding: 0.5rem 0.35rem; border-radius: 8px; cursor: pointer; }
-.lista-prog li:hover, .lista-prog li.sel { background: #f6f5f8; }
+/* Lista de programas agrupada: recomendados primero */
+.lista-prog { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow-y: auto; }
+.lista-prog li.lp-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.35rem; border-radius: 8px; cursor: pointer; }
+.lista-prog li.lp-item:hover, .lista-prog li.lp-item.sel { background: #f6f5f8; }
+.lista-prog li.lp-grupo { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); padding: 0.75rem 0.35rem 0.3rem; }
+.lista-prog li.lp-grupo:first-child { padding-top: 0; }
 .lp-nombre { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
-.lp-barra { height: 6px; background: #f1eee9; border-radius: 999px; overflow: hidden; }
-.lp-barra i { display: block; height: 100%; border-radius: 999px; }
-.lp-pct { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); text-align: right; font-variant-numeric: tabular-nums; }
 .lista-vacia { font-size: 0.85rem; color: var(--text-secondary); padding: 0.5rem 0.35rem; }
 </style>
 {% endblock %}
 
 {% block content %}
+{% set principal = perfil.get('perfil_principal') or '' %}
+{% set secundario = perfil.get('perfil_secundario') or '' %}
 <div class="expl-wrap">
 
   <div class="expl-header">
@@ -93,8 +94,9 @@
       {% endif %}
     </h1>
     <p>
-      Los 18 pregrados de la Universidad de San Buenaventura Medellín ubicados en el hexágono Holland.
-      Cuanto más oscuro el punto, más se parece el programa a tu perfil. Toca un punto o un programa de la lista para ver el detalle.
+      Los 18 pregrados de la Universidad de San Buenaventura Medellín ubicados en el hexágono Holland
+      según los campos con los que se relacionan. Los puntos naranja son los programas recomendados para tu perfil.
+      Toca un punto o un programa de la lista para ver el detalle.
     </p>
   </div>
 
@@ -109,11 +111,6 @@
       <button class="chip-fac" data-fac="Psicología">Psicología</button>
       <button class="chip-fac" data-fac="Derecho">Derecho</button>
     </div>
-    <div class="filtro-afinidad">
-      <span class="filtro-label">Afinidad mínima</span>
-      <input type="range" id="compatRange" min="0" max="90" value="0" step="5" aria-label="Afinidad mínima">
-      <span id="compatLabel">0%</span>
-    </div>
     <div class="buscar">
       <input type="text" id="searchInput" placeholder="Buscar programa" autocomplete="off" aria-label="Buscar programa">
     </div>
@@ -125,10 +122,9 @@
            aria-label="Hexágono Holland con los programas de la USB y tu perfil"></svg>
       <div class="mapa-tip" id="mapaTip"></div>
       <div class="hex-leyenda">
-        <span><i class="sw" style="background:#e9a15c"></i>Afinidad baja</span>
-        <span><i class="sw" style="background:#e07b1f"></i>Media</span>
-        <span><i class="sw" style="background:#b85a00"></i>Alta</span>
-        <span><i class="sw" style="background:#7a3a00"></i>Muy alta</span>
+        {% if principal %}<span><i class="sw" style="background:#b85a00"></i>Recomendado para tu perfil {{ principal }}</span>{% endif %}
+        {% if secundario %}<span><i class="sw" style="background:#e9a15c"></i>Relacionado con tu perfil secundario, {{ secundario }}</span>{% endif %}
+        <span><i class="sw" style="background:#c9c6d0"></i>Otros programas</span>
         <span><i class="sw-perfil"></i>Tu perfil</span>
       </div>
     </div>
@@ -137,7 +133,7 @@
       <div class="panel-card">
         <div class="panel-placeholder" id="panelPlaceholder">Elige un programa en el mapa o en la lista.</div>
         <div class="detalle" id="detalle">
-          <div class="det-compat" id="dCompat"></div>
+          <span class="det-etiqueta" id="dEtiqueta"></span>
           <div class="det-nombre" id="dNombre"></div>
           <div class="det-fac" id="dFac"></div>
           <div class="det-codigos" id="dCodigos"></div>
@@ -148,7 +144,7 @@
       </div>
 
       <div class="panel-card">
-        <div class="panel-titulo">Programas por afinidad</div>
+        <div class="panel-titulo">Programas</div>
         <ul class="lista-prog" id="listaProg"></ul>
       </div>
 
@@ -162,7 +158,7 @@
 
 {% block scripts %}
 <script>
-// Puntajes del estudiante (0-100) por campo
+// Puntajes del estudiante (0-100) por campo: la figura de su perfil
 const PUNTAJES = {
   R: {{ (puntajes.get('Realista',     {}) or {}).get('normalizado', 0) | round(2) }},
   I: {{ (puntajes.get('Investigador', {}) or {}).get('normalizado', 0) | round(2) }},
@@ -171,39 +167,47 @@ const PUNTAJES = {
   E: {{ (puntajes.get('Emprendedor',  {}) or {}).get('normalizado', 0) | round(2) }},
   C: {{ (puntajes.get('Convencional', {}) or {}).get('normalizado', 0) | round(2) }},
 };
+const PERFIL_PRINCIPAL = {{ (perfil.get('perfil_principal') or '') | tojson }};
+const PERFIL_SECUNDARIO = {{ (perfil.get('perfil_secundario') or '') | tojson }};
 
 const CLAVES = ['R', 'I', 'A', 'S', 'E', 'C'];
 const NOMBRES = { R: 'Realista', I: 'Investigador', A: 'Artístico', S: 'Social', E: 'Emprendedor', C: 'Convencional' };
+const CLAVE_DE = { 'Realista': 'R', 'Investigador': 'I', 'Artístico': 'A', 'Social': 'S', 'Emprendedor': 'E', 'Convencional': 'C' };
 const COLOR_AREA = { R: '#eb6834', I: '#2a78d6', A: '#e87ba4', S: '#1baf7a', E: '#eda100', C: '#4a3aa7' };
 const ANGULO = { R: -90, I: -30, A: 30, S: 90, E: 150, C: 210 };
 const CX = 250, CY = 250, RADIO = 178;
 const VERT = {};
 CLAVES.forEach(k => { const a = ANGULO[k] * Math.PI / 180; VERT[k] = { x: Math.cos(a), y: Math.sin(a) }; });
 
-// Pregrados de la USB con su afinidad ya calculada en el servidor
-// (frontend/app/programas_usb.py), la misma que usa la página de resultados.
-const BASE = 'https://usbmed.edu.co/programas/pregrados/';
+// Pregrados de la USB (frontend/app/programas_usb.py): campos a los que pertenece cada
+// uno y si se recomienda por el perfil principal, el secundario u otro. Sin porcentajes:
+// no hay una fuente que respalde una medida numérica de afinidad por programa.
 const PROGRAMAS = {{ programas | tojson }}.map((p, i) => Object.assign(p, { id: i }));
+const COLOR_GRUPO = { principal: '#b85a00', secundario: '#e9a15c', otro: '#c9c6d0' };
+const ORDEN_GRUPO = { principal: 0, secundario: 1, otro: 2 };
+const TITULO_GRUPO = {
+  principal: 'Recomendados para tu perfil ' + PERFIL_PRINCIPAL,
+  secundario: 'Relacionados con tu perfil secundario',
+  otro: 'Otros programas',
+};
+const ETIQUETA_GRUPO = { principal: 'Recomendado', secundario: 'Perfil secundario', otro: 'Otro campo' };
 
-// Escala ordinal de un solo tono (validada): más oscuro = más afín
-function colorAfinidad(v) { return v >= 80 ? '#7a3a00' : v >= 65 ? '#b85a00' : v >= 50 ? '#e07b1f' : '#e9a15c'; }
-
-function top3(scores) { return CLAVES.map(k => [k, scores[k]]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(x => x[0]); }
-
-function posicion(scores) {
-  const t = CLAVES.map(k => [k, scores[k] || 0]).sort((x, y) => y[1] - x[1]).slice(0, 3);
-  const total = t.reduce((s, [, v]) => s + v, 0);
+// Posición: promedio de los vértices de sus campos. Un solo campo queda cerca del
+// vértice; dos campos, entre ambos. Los puntos que caen encima se separan un poco.
+function posicion(campos) {
+  const ks = campos.map(a => CLAVE_DE[a]).filter(Boolean);
+  if (!ks.length) return { x: CX, y: CY };
   let px = 0, py = 0;
-  t.forEach(([k, v]) => { px += v / total * VERT[k].x; py += v / total * VERT[k].y; });
-  return { x: CX + px * RADIO * 0.86, y: CY + py * RADIO * 0.86 };
+  ks.forEach(k => { px += VERT[k].x; py += VERT[k].y; });
+  px /= ks.length; py /= ks.length;
+  const f = ks.length === 1 ? 0.78 : 0.92;
+  return { x: CX + px * RADIO * f, y: CY + py * RADIO * f };
 }
 
-// Posición de cada programa: promedio de sus 3 campos más fuertes. Los que caen casi
-// en el mismo sitio se separan un poco (relajación simple) para que no se encimen.
 function ubicarProgramas() {
-  PROGRAMAS.forEach(p => { p.pos = posicion(p.s); });
+  PROGRAMAS.forEach(p => { p.pos = posicion(p.campos); });
   const MIN = 20;
-  for (let it = 0; it < 60; it++) {
+  for (let it = 0; it < 80; it++) {
     let movio = false;
     for (let i = 0; i < PROGRAMAS.length; i++) {
       for (let j = i + 1; j < PROGRAMAS.length; j++) {
@@ -223,11 +227,9 @@ function ubicarProgramas() {
 }
 
 function porQue(p) {
-  const tuyos = new Set(top3(PUNTAJES)), suyos = top3(p.s);
-  const comunes = suyos.filter(k => tuyos.has(k)).map(k => NOMBRES[k]);
-  if (comunes.length >= 2) return 'Comparten lo que más destaca en tu perfil: ' + comunes.join(', ') + '.';
-  if (comunes.length === 1) return 'Coinciden en el campo ' + comunes[0] + ', uno de los más fuertes de tu perfil.';
-  return 'Este programa se apoya en campos distintos a los que más destacan en tu perfil.';
+  if (p.grupo === 'principal') return 'Recomendado para tu perfil ' + PERFIL_PRINCIPAL + ', tu campo más fuerte.';
+  if (p.grupo === 'secundario') return 'Relacionado con tu perfil secundario, ' + PERFIL_SECUNDARIO + '.';
+  return 'Se relaciona con ' + p.campos.join(' y ') + ', que no son tus campos principales.';
 }
 
 // ── Dibujo ────────────────────────────────────────────
@@ -238,25 +240,23 @@ function el(tag, attrs, padre) {
   if (padre) padre.appendChild(e);
   return e;
 }
-const estado = { fac: 'all', min: 0, q: '', sel: null };
+const estado = { fac: 'all', q: '', sel: null };
 
 function visibles() {
   return PROGRAMAS.filter(p =>
-    (estado.fac === 'all' || p.f === estado.fac) && p.af >= estado.min &&
+    (estado.fac === 'all' || p.f === estado.fac) &&
     (!estado.q || p.n.toLowerCase().includes(estado.q.toLowerCase())));
 }
 
 function dibujar() {
   const svg = document.getElementById('hollandSvg');
   svg.innerHTML = '';
-  // Anillos y radios: línea fina y sólida
   [0.25, 0.5, 0.75, 1].forEach(f => {
     el('polygon', { points: CLAVES.map(k => (CX + VERT[k].x * RADIO * f) + ',' + (CY + VERT[k].y * RADIO * f)).join(' '),
       fill: 'none', stroke: f === 1 ? '#d9d7e0' : '#ecebf0', 'stroke-width': 1 }, svg);
   });
   CLAVES.forEach(k => el('line', { x1: CX, y1: CY, x2: CX + VERT[k].x * RADIO, y2: CY + VERT[k].y * RADIO, stroke: '#ecebf0', 'stroke-width': 1 }, svg));
 
-  // Vértices: punto de color del campo + nombre en tinta
   CLAVES.forEach(k => {
     const x = CX + VERT[k].x * (RADIO + 26), y = CY + VERT[k].y * (RADIO + 26);
     el('circle', { cx: x, cy: y - 9, r: 4, fill: COLOR_AREA[k] }, svg);
@@ -264,20 +264,17 @@ function dibujar() {
     t.textContent = NOMBRES[k];
   });
 
-  // Perfil del estudiante: tinta oscura para separarlo de los programas
   const pts = CLAVES.map(k => (CX + VERT[k].x * RADIO * PUNTAJES[k] / 100) + ',' + (CY + VERT[k].y * RADIO * PUNTAJES[k] / 100)).join(' ');
   el('polygon', { points: pts, fill: 'rgba(28,27,34,0.06)', stroke: '#1c1b22', 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg);
 
-  // Programas
+  // Los recomendados se dibujan al final para que queden encima
   const lista = visibles();
-  lista.forEach(p => {
+  lista.slice().sort((a, b) => ORDEN_GRUPO[b.grupo] - ORDEN_GRUPO[a.grupo]).forEach(p => {
     const c = p.pos, sel = p.id === estado.sel;
-    const g = el('g', { style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': p.n + ', afinidad ' + p.af + '%' }, svg);
-    el('circle', { cx: c.x, cy: c.y, r: 15, fill: 'transparent' }, g);       // área de toque amplia
-    el('circle', { cx: c.x, cy: c.y, r: sel ? 10 : 7, fill: colorAfinidad(p.af), stroke: '#ffffff', 'stroke-width': 2 }, g);
-    if (sel) {
-      el('circle', { cx: c.x, cy: c.y, r: 15, fill: 'none', stroke: '#1c1b22', 'stroke-width': 1.5 }, g);
-    }
+    const g = el('g', { style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': p.n + ', ' + ETIQUETA_GRUPO[p.grupo].toLowerCase() }, svg);
+    el('circle', { cx: c.x, cy: c.y, r: 15, fill: 'transparent' }, g);
+    el('circle', { cx: c.x, cy: c.y, r: sel ? 10 : 7, fill: COLOR_GRUPO[p.grupo], stroke: '#ffffff', 'stroke-width': 2 }, g);
+    if (sel) el('circle', { cx: c.x, cy: c.y, r: 15, fill: 'none', stroke: '#1c1b22', 'stroke-width': 1.5 }, g);
     g.addEventListener('click', () => seleccionar(p.id));
     g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(p.id); } });
     g.addEventListener('mouseenter', () => mostrarTip(p, c));
@@ -291,7 +288,8 @@ function dibujar() {
 function mostrarTip(p, c) {
   const tip = document.getElementById('mapaTip'), svg = document.getElementById('hollandSvg');
   const esc = svg.getBoundingClientRect().width / 500;
-  tip.innerHTML = '<b>' + p.n + '</b>' + p.af + '% de afinidad';
+  tip.innerHTML = '<b></b>' + ETIQUETA_GRUPO[p.grupo];
+  tip.querySelector('b').textContent = p.n;
   tip.style.left = (8 + c.x * esc) + 'px';
   tip.style.top = (8 + c.y * esc) + 'px';
   tip.style.display = 'block';
@@ -301,16 +299,22 @@ function ocultarTip() { document.getElementById('mapaTip').style.display = 'none
 function dibujarLista(lista) {
   const ul = document.getElementById('listaProg');
   ul.innerHTML = '';
-  const orden = lista.slice().sort((a, b) => b.af - a.af);
-  if (!orden.length) { ul.innerHTML = '<li class="lista-vacia">Ningún programa cumple los filtros.</li>'; return; }
+  if (!lista.length) { ul.innerHTML = '<li class="lista-vacia">Ningún programa cumple los filtros.</li>'; return; }
+  const orden = lista.slice().sort((a, b) => (ORDEN_GRUPO[a.grupo] - ORDEN_GRUPO[b.grupo]) || a.n.localeCompare(b.n, 'es'));
+  let grupoActual = null;
   orden.forEach(p => {
+    if (p.grupo !== grupoActual) {
+      grupoActual = p.grupo;
+      const h = document.createElement('li');
+      h.className = 'lp-grupo';
+      h.textContent = TITULO_GRUPO[p.grupo];
+      ul.appendChild(h);
+    }
     const li = document.createElement('li');
-    if (p.id === estado.sel) li.className = 'sel';
-    li.innerHTML = '<span class="lp-nombre"></span><span class="lp-barra"><i></i></span><span class="lp-pct">' + p.af + '%</span>';
+    li.className = 'lp-item' + (p.id === estado.sel ? ' sel' : '');
+    li.innerHTML = '<i class="sw"></i><span class="lp-nombre"></span>';
+    li.querySelector('.sw').style.background = COLOR_GRUPO[p.grupo];
     li.querySelector('.lp-nombre').textContent = p.n;
-    const barra = li.querySelector('i');
-    barra.style.width = p.af + '%';
-    barra.style.background = colorAfinidad(p.af);
     li.addEventListener('click', () => seleccionar(p.id));
     ul.appendChild(li);
   });
@@ -321,19 +325,22 @@ function seleccionar(id) {
   estado.sel = id;
   document.getElementById('panelPlaceholder').style.display = 'none';
   document.getElementById('detalle').classList.add('visible');
-  document.getElementById('dCompat').innerHTML = p.af + '%<small>de afinidad</small>';
+  const et = document.getElementById('dEtiqueta');
+  et.className = 'det-etiqueta ' + p.grupo;
+  et.textContent = ETIQUETA_GRUPO[p.grupo];
   document.getElementById('dNombre').textContent = p.n;
   document.getElementById('dFac').textContent = 'Facultad de ' + p.f;
   const cod = document.getElementById('dCodigos');
   cod.innerHTML = '';
-  top3(p.s).forEach(k => {
+  p.campos.forEach(area => {
     const s = document.createElement('span');
-    s.innerHTML = '<i class="sw" style="background:' + COLOR_AREA[k] + '"></i>' + NOMBRES[k];
+    s.innerHTML = '<i class="sw" style="background:' + COLOR_AREA[CLAVE_DE[area]] + '"></i>';
+    s.appendChild(document.createTextNode(area));
     cod.appendChild(s);
   });
   document.getElementById('dDesc').textContent = p.d;
   document.getElementById('dPorque').textContent = porQue(p);
-  document.getElementById('dLink').href = BASE + p.u;
+  document.getElementById('dLink').href = p.url;
   dibujar();
 }
 
@@ -343,16 +350,12 @@ document.querySelectorAll('.chip-fac').forEach(b => b.addEventListener('click', 
   document.querySelectorAll('.chip-fac').forEach(x => x.classList.toggle('activo', x === b));
   dibujar();
 }));
-document.getElementById('compatRange').addEventListener('input', function () {
-  estado.min = +this.value;
-  document.getElementById('compatLabel').textContent = this.value + '%';
-  dibujar();
-});
 document.getElementById('searchInput').addEventListener('input', function () { estado.q = this.value; dibujar(); });
 
 ubicarProgramas();
 dibujar();
-// Arranca mostrando el programa más afín
-seleccionar(PROGRAMAS.slice().sort((a, b) => b.af - a.af)[0].id);
+// Arranca mostrando el primer programa recomendado
+const inicial = PROGRAMAS.find(p => p.grupo === 'principal') || PROGRAMAS[0];
+if (inicial) seleccionar(inicial.id);
 </script>
 {% endblock %}

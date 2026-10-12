@@ -3,7 +3,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from ..utils import api_request, api_requests_parallel, api_request_file, jwt_is_expired
 from ..programas_usb import (
-    programas_con_afinidad, programas_por_afinidad, definicion_perfil,
+    programas_recomendados, programas_para_mapa, definicion_perfil,
     sesiones_distintas, recomendaciones_accionables, fortalezas_sin_porcentaje,
 )
 
@@ -339,7 +339,7 @@ def resultados(aplicacion_id):
     historial = evolucion_data.get('evolucion', {}).get('historial', [])
     hay_sesiones = sesiones_distintas(historial) >= 2
     # Perfiles antiguos sin puntajes: _unificar_puntajes_riasec devuelve todo en
-    # cero, y eso daría 50 % de afinidad a todos y un falso "perfil equilibrado".
+    # cero, y eso daría un falso "perfil equilibrado".
     hay_puntajes = bool(puntajes_area or intereses_puntajes or competencias_puntajes)
 
     return render_template('estudiante/resultados.html',
@@ -347,7 +347,8 @@ def resultados(aplicacion_id):
                            resultados_dimension=data.get('resultados_dimension', []),
                            aplicacion=data.get('aplicacion'),
                            estudiante=data.get('estudiante'),
-                           programas=programas_por_afinidad(comparativo)[:8] if hay_puntajes else [],
+                           programas=programas_recomendados(perfil.get('perfil_principal'),
+                                                            perfil.get('perfil_secundario')),
                            definicion=definicion_perfil(comparativo) if hay_puntajes else None,
                            fortalezas=fortalezas_sin_porcentaje(perfil.get('fortalezas')),
                            recomendaciones=recomendaciones_accionables(
@@ -449,7 +450,8 @@ def explorador(aplicacion_id):
     return render_template('estudiante/explorador.html',
                            perfil=perfil,
                            puntajes=comparativo,
-                           programas=programas_con_afinidad(comparativo),
+                           programas=programas_para_mapa(perfil.get('perfil_principal'),
+                                                         perfil.get('perfil_secundario')),
                            aplicacion_id=aplicacion_id)
 
 

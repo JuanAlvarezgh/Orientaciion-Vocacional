@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from app.programas_usb import (
-    PROGRAMAS, afinidad, programas_con_afinidad, programas_por_afinidad,
+    PROGRAMAS, PROGRAMAS_POR_PERFIL, campos_de, programas_recomendados, programas_para_mapa,
     definicion_perfil, sesiones_distintas, recomendaciones_accionables,
 )
 
@@ -17,39 +17,51 @@ def _puntajes(**valores):
     return {nombres[k]: {'normalizado': v} for k, v in valores.items()}
 
 
-def test_hay_18_programas_con_perfil_completo():
+
+
+
+
+
+
+def test_hay_18_programas_y_cada_uno_pertenece_a_algun_campo():
     assert len(PROGRAMAS) == 18
     for p in PROGRAMAS:
-        assert set(p['s']) == {'R', 'I', 'A', 'S', 'E', 'C'}
+        assert campos_de(p['n']), p['n']
 
 
-def test_afinidad_es_100_con_la_misma_forma_y_0_con_la_opuesta():
-    programa = {'R': 9, 'I': 1, 'A': 1, 'S': 1, 'E': 1, 'C': 1}
-    assert afinidad([90, 10, 10, 10, 10, 10], programa) == 100
-    assert afinidad([10, 90, 90, 90, 90, 90], programa) == 0
+def test_la_lista_por_perfil_es_la_misma_del_backend():
+    import ast
+    ruta = os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'app', 'services', 'psicometrico_service.py')
+    fuente = open(ruta, encoding='utf-8').read()
+    inicio = fuente.index('PROGRAMAS_POR_PERFIL = {')
+    fin = fuente.index('\n}', inicio) + 2
+    del_backend = ast.literal_eval(fuente[inicio:fin].split('=', 1)[1].strip())
+    assert PROGRAMAS_POR_PERFIL == del_backend
 
 
-def test_afinidad_de_perfil_plano_es_50():
-    assert afinidad([50] * 6, {'R': 9, 'I': 1, 'A': 1, 'S': 1, 'E': 1, 'C': 1}) == 50
-
-
-def test_afinidad_redondea_como_javascript():
-    # Math.round(68.5) = 69 en JS; round(68.5) = 68 en Python. Se usa el de JS.
-    from app.programas_usb import _redondear
-    assert _redondear(68.5) == 69
-
-
-def test_programas_por_afinidad_ordena_de_mayor_a_menor_y_trae_url():
-    lista = programas_por_afinidad(_puntajes(R=10, I=20, A=95, S=30, E=40, C=10))
-    assert [p['af'] for p in lista] == sorted((p['af'] for p in lista), reverse=True)
+def test_recomendados_principal_primero_y_sin_repetir():
+    lista = programas_recomendados('Emprendedor', 'Convencional')
+    nombres = [p['n'] for p in lista]
+    assert nombres[:4] == PROGRAMAS_POR_PERFIL['Emprendedor']
+    assert nombres.count('Administración de Negocios') == 1
+    assert [p['grupo'] for p in lista].count('secundario') == 3
     assert lista[0]['url'].startswith('https://usbmed.edu.co/programas/pregrados/')
-    assert lista[0]['n'] in ('Diseño de Modas', 'Arquitectura', 'Ingeniería Multimedia',
-                             'Creación de Contenidos Digitales')
+    assert 'af' not in lista[0] and 's' not in lista[0]
 
 
-def test_programas_con_afinidad_conserva_el_orden_original():
-    lista = programas_con_afinidad(_puntajes(R=50, I=50, A=50, S=50, E=50, C=60))
-    assert [p['n'] for p in lista] == [p['n'] for p in PROGRAMAS]
+def test_recomendados_sin_secundario_ni_perfil_conocido():
+    assert [p['grupo'] for p in programas_recomendados('Convencional')] == ['principal'] * 4
+    assert programas_recomendados('Sin determinar') == []
+
+
+def test_mapa_marca_grupos_y_conserva_el_orden():
+    mapa = programas_para_mapa('Realista', 'Convencional')
+    assert [p['n'] for p in mapa] == [p['n'] for p in PROGRAMAS]
+    grupos = {p['n']: p['grupo'] for p in mapa}
+    assert grupos['Ingeniería Industrial'] == 'principal'
+    assert grupos['Contaduría Pública'] == 'secundario'
+    assert grupos['Psicología'] == 'otro'
+    assert {p['n']: p['campos'] for p in mapa}['Ingeniería Industrial'] == ['Realista', 'Convencional']
 
 
 def test_perfil_marcado_con_un_campo_lejos_del_resto():
