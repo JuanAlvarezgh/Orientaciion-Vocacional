@@ -93,6 +93,10 @@
           ds.borderWidth = 2;
           ds.borderDash = [];                       // nada de líneas punteadas
           ds.backgroundColor = (t === 'radar' || ds.fill) ? alfa(c, 0.10) : c;
+          // Radar de una sola serie sobre las seis áreas: cada vértice con el color de su área
+          if (t === 'radar' && series.length === 1 && etiquetasSonAreas) {
+            ds.pointBackgroundColor = labels.map(colorArea);
+          }
         } else if (t === 'bar') {
           if (deArea) ds.backgroundColor = deArea;
           else if (etiquetasSonAreas && series.length === 1) ds.backgroundColor = labels.map(colorArea);
