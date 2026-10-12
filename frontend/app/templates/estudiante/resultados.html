@@ -4,9 +4,8 @@
 {% block content %}
 <div class="container">
     {% if perfil %}
-    {# Ilustración del perfil: el zorro USB vestido según el resultado, como en
-       las páginas de tipo de 16personalities (la imagen es parte del resultado). #}
-    {# Cada perfil muestra juntos todos los disfraces de sus programas USB afines. #}
+    {# Ilustración del perfil: el zorro USB vestido según el resultado. Cada perfil
+       muestra juntos todos los disfraces de sus programas USB afines. #}
     {% set figuras = {
         'Realista': ('realista', ['realista-1.webp', 'realista-2.webp', 'realista-3.webp']),
         'Investigador': ('investigador', ['investigador-1.webp', 'investigador-2.webp', 'investigador-3.webp']),
@@ -17,43 +16,7 @@
     } %}
     {% set fig = figuras.get(perfil.perfil_principal, ('neutro', ['mascota-default.webp'])) %}
     {% set dj = perfil.datos_json or {} %}
-
-    <!-- Hero de resultados -->
-    <div class="result-hero perfil-{{ fig[0] }}">
-        <div class="rh-texto">
-            {% if dj.ranking_intereses %}
-            <div class="rh-chips">
-                {% for area in dj.ranking_intereses[:3] %}<span>{{ area }}</span>{% endfor %}
-            </div>
-            {% endif %}
-            <h1>{{ perfil.perfil_principal }}</h1>
-            <p class="rh-sub">
-                {% if dj.codigo_riasec %}Código RIASEC {{ dj.codigo_riasec }}{% endif %}
-                {% if perfil.perfil_secundario %} · Perfil secundario: {{ perfil.perfil_secundario }}{% endif %}
-            </p>
-            {% if perfil.descripcion %}
-            <p class="rh-lema">{{ perfil.descripcion.split('.')[0] }}.</p>
-            {% endif %}
-            {% if dj.preliminar %}
-            <span class="rh-nota">Resultado preliminar: falta la prueba de Intereses</span>
-            {% endif %}
-        </div>
-        <div class="rh-grupo n{{ fig[1]|length }}">
-            {% for archivo in fig[1] %}
-            <img class="rh-figura" src="{{ url_for('static', filename='img/mascota/' ~ archivo) }}" alt="">
-            {% endfor %}
-        </div>
-    </div>
-
-    {% if perfil.datos_json and perfil.datos_json.advertencia %}
-    <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ perfil.datos_json.advertencia }}
-    </div>
-    {% endif %}
-
-
-    {# Colores fijos por área (barra, texto oscuro legible, pista clara). Validados
-       para daltonismo; el nombre del área siempre va escrito junto a su color. #}
+    {# Colores fijos por área (barra, texto oscuro legible, pista clara). #}
     {% set colores = {
         'Realista': ('#eb6834', '#b4441a', '#fbe3d9'),
         'Investigador': ('#2a78d6', '#1c5cab', '#dbe8f8'),
@@ -63,261 +26,256 @@
         'Convencional': ('#4a3aa7', '#4a3aa7', '#e2dff4'),
     } %}
 
-    {% if dj.puntajes_por_area %}
-    {% set orden_areas = dj.ranking_intereses or (dj.puntajes_por_area.items()|sort(attribute='1.normalizado', reverse=True)|map(attribute='0')|list) %}
-    <!-- Perfil por área: barras al estilo 16personalities -->
-    <div class="card rasgos-card">
-        <div class="card-header">
-            <h2>Tu perfil por área</h2>
-            <span class="rasgos-ayuda">En el orden de tu perfil &middot; % combinado de intereses y competencias</span>
-        </div>
-        <div class="rasgos">
-            {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}
-            {% set c = colores.get(area, ('#9a9fa9', '#52514e', '#ecebef')) %}
-            {% set v = (datos.get('normalizado') or 0)|float %}
-            {% set ip = datos.get('interes_pct') %}
-            {% set cp = datos.get('competencia_pct') %}
-            <div class="rasgo{% if loop.first %} rasgo-top{% endif %}" style="--c: {{ c[0] }}; --c-txt: {{ c[1] }}; --c-pista: {{ c[2] }}; --v: {{ v|round(1) }};">
-                <div class="rasgo-etiqueta"><span><b>{{ v|round|int }}%</b> {{ area }}</span></div>
-                <div class="rasgo-barra" role="img" aria-label="{{ area }}: {{ v|round|int }} por ciento">
-                    <div class="rasgo-relleno"></div>
-                    <span class="rasgo-perilla"></span>
+    <nav class="cap-nav" aria-label="Capítulos de tus resultados">
+        <a href="#cap-perfil">Tu perfil</a>
+        {% if dj.puntajes_por_area %}<a href="#cap-areas">Tus áreas</a>{% endif %}
+        {% if programas %}<a href="#cap-programas">Programas</a>{% endif %}
+        {% if perfil.fortalezas or recomendaciones %}<a href="#cap-fortalezas">Fortalezas</a>{% endif %}
+        <a href="#cap-sigue">Qué sigue</a>
+    </nav>
+
+    <!-- 1. Tu perfil -->
+    <section id="cap-perfil" class="capitulo">
+        <div class="result-hero perfil-{{ fig[0] }}">
+            <div class="rh-texto">
+                {% if dj.ranking_intereses %}
+                <div class="rh-chips">
+                    {% for area in dj.ranking_intereses[:3] %}<span>{{ area }}</span>{% endfor %}
                 </div>
-                <div class="rasgo-polos">
-                    <span{% if ip is not none and (cp is none or ip >= cp) %} class="gana"{% endif %}>Intereses {{ (ip|round|int ~ '%') if ip is not none else '—' }}</span>
-                    <span{% if cp is not none and (ip is none or cp > ip) %} class="gana"{% endif %}>Competencias {{ (cp|round|int ~ '%') if cp is not none else '—' }}</span>
-                </div>
+                {% endif %}
+                <h1>{{ perfil.perfil_principal }}</h1>
+                <p class="rh-sub">
+                    {% if dj.codigo_riasec %}Código RIASEC {{ dj.codigo_riasec }}{% endif %}
+                    {% if perfil.perfil_secundario %} · Perfil secundario: {{ perfil.perfil_secundario }}{% endif %}
+                </p>
+                {% if perfil.descripcion %}
+                <p class="rh-lema">{{ perfil.descripcion.split('.')[0] }}.</p>
+                {% endif %}
+                {% if dj.preliminar %}
+                <span class="rh-nota">Resultado preliminar: falta la prueba de Intereses</span>
+                {% endif %}
             </div>
-            {% endfor %}
-        </div>
-        <details class="rasgos-tabla">
-            <summary>Ver tabla de puntajes</summary>
-            <div class="table-container">
-                <table>
-                    <thead><tr><th>Área</th><th>Intereses</th><th>Competencias</th><th>Combinado</th></tr></thead>
-                    <tbody>
-                    {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}
-                    {% set ip = datos.get('interes_pct') %}{% set cp = datos.get('competencia_pct') %}
-                    <tr>
-                        <td><strong>{{ area }}</strong></td>
-                        <td>{{ (ip|round|int ~ '%') if ip is not none else '—' }}</td>
-                        <td>{{ (cp|round|int ~ '%') if cp is not none else '—' }}</td>
-                        <td>{{ (datos.get('normalizado') or 0)|round|int }}%</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </details>
-    </div>
-    {% endif %}
-
-    {% if dj.programas_usb %}
-    <!-- Programas de pregrado de la USB afines al perfil -->
-    {% set nombres_principal = dj.programas_usb | map(attribute='nombre') | list %}
-    {% set extra = [] %}
-    {% for p in dj.programas_usb_secundario or [] %}{% if p.nombre not in nombres_principal %}{% set _ = extra.append(p) %}{% endif %}{% endfor %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Programas en la USB</h2>
-            <span class="rasgos-ayuda">Pregrados de la San Buenaventura Medellín afines a tu perfil</span>
-        </div>
-        <div class="programas-grid">
-            {% for p in dj.programas_usb %}
-            <a class="programa" href="{{ p.url }}" target="_blank" rel="noopener">
-                <span class="programa-nombre">{{ p.nombre }}</span>
-                <span class="programa-meta">Perfil {{ perfil.perfil_principal }} · Ver programa <span aria-hidden="true">&#8599;</span></span>
-            </a>
-            {% endfor %}
-            {% for p in extra %}
-            <a class="programa programa-sec" href="{{ p.url }}" target="_blank" rel="noopener">
-                <span class="programa-nombre">{{ p.nombre }}</span>
-                <span class="programa-meta">Perfil secundario {{ perfil.perfil_secundario }} · Ver programa <span aria-hidden="true">&#8599;</span></span>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="grid-2" style="margin-top: 1.5rem;">
-        <!-- Radar: intereses y competencias por área -->
-        <div class="card">
-            <div class="card-header">
-                <h2>Intereses y competencias</h2>
-            </div>
-            <div class="chart-container chart-radar">
-                <canvas id="chartHolland" aria-label="Gráfico radar de intereses y competencias por área RIASEC" role="img"></canvas>
+            <div class="rh-grupo n{{ fig[1]|length }}">
+                {% for archivo in fig[1] %}
+                <img class="rh-figura" src="{{ url_for('static', filename='img/mascota/' ~ archivo) }}" alt="">
+                {% endfor %}
             </div>
         </div>
 
-        <!-- Descripción del perfil -->
-        <div class="card">
-            <div class="card-header">
-                <h2>Descripción de tu perfil</h2>
-            </div>
-            <p style="color: var(--text-secondary); line-height: 1.75;">{{ perfil.descripcion }}</p>
+        {% if dj.advertencia %}
+        <div class="alert alert-warning">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> {{ dj.advertencia }}
+        </div>
+        {% endif %}
 
-            {% if not dj.programas_usb and dj.carreras_afines %}
-            {# Perfiles antiguos sin programas USB: se muestran las carreras guardadas #}
-            <h4 class="sub-titulo">Carreras afines</h4>
+        {% if perfil.descripcion or dj.ambiente_trabajo %}
+        <div class="card perfil-texto">
+            {% if perfil.descripcion %}<p>{{ perfil.descripcion }}</p>{% endif %}
+            {% if dj.ambiente_trabajo %}
+            <h3 class="sub-titulo">Ambiente de trabajo ideal</h3>
+            <p>{{ dj.ambiente_trabajo }}</p>
+            {% endif %}
+            {% if not programas and dj.carreras_afines %}
+            {# Perfiles antiguos sin puntajes por área: se muestran las carreras guardadas #}
+            <h3 class="sub-titulo">Carreras afines</h3>
             <div class="chips-carreras">
                 {% for carrera in dj.carreras_afines %}<span>{{ carrera }}</span>{% endfor %}
             </div>
             {% endif %}
+        </div>
+        {% endif %}
+    </section>
 
-            {% if dj.ambiente_trabajo %}
-            <h4 class="sub-titulo">Ambiente de trabajo ideal</h4>
-            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">{{ dj.ambiente_trabajo }}</p>
+    {% if dj.puntajes_por_area %}
+    {% set orden_areas = dj.ranking_intereses or (dj.puntajes_por_area.items()|sort(attribute='1.normalizado', reverse=True)|map(attribute='0')|list) %}
+    <!-- 2. Tus áreas -->
+    <section id="cap-areas" class="capitulo">
+        {% if definicion %}
+        <div class="definicion definicion-{{ definicion.tipo }}">
+            {% if definicion.tipo == 'equilibrado' %}
+            <img src="{{ url_for('static', filename='img/mascota/mascota-equipo.webp') }}" alt="" onerror="this.remove()">
             {% endif %}
+            <p>
+                {% if definicion.tipo == 'equilibrado' %}
+                <b>Tu perfil es equilibrado</b> entre {{ definicion.areas[:-1]|join(', ') }} y {{ definicion.areas[-1] }}:
+                están a menos de 10 puntos entre sí. No es un mal resultado, significa que tienes varias puertas abiertas;
+                el mapa vocacional te ayuda a compararlas.
+                {% elif definicion.areas|length == 2 %}
+                <b>Tu perfil está marcado</b> en dos campos: {{ definicion.areas[0] }} y {{ definicion.areas[1] }} se separan con claridad del resto.
+                {% else %}
+                <b>Tu perfil está marcado:</b> {{ definicion.areas[0] }} destaca con claridad sobre los demás campos.
+                {% endif %}
+            </p>
         </div>
-    </div>
+        {% endif %}
 
-    {% if perfil.fortalezas %}
-    <!-- Fortalezas -->
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Fortalezas identificadas</h2>
-        </div>
-        <ul class="lista-limpia">
-        {% for linea in perfil.fortalezas.split('
-') %}
-            {% if linea.strip() %}<li>{{ linea.strip().lstrip('•').strip() }}</li>{% endif %}
-        {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
+        <div class="grid-2 areas-grid">
+            <div class="card rasgos-card">
+                <div class="card-header">
+                    <h2>Tu perfil por área</h2>
+                    <span class="rasgos-ayuda">% combinado de intereses y competencias</span>
+                </div>
+                <div class="rasgos">
+                    {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}
+                    {% set c = colores.get(area, ('#9a9fa9', '#52514e', '#ecebef')) %}
+                    {% set v = (datos.get('normalizado') or 0)|float %}
+                    {% set ip = datos.get('interes_pct') %}
+                    {% set cp = datos.get('competencia_pct') %}
+                    <div class="rasgo{% if loop.first %} rasgo-top{% endif %}" style="--c: {{ c[0] }}; --c-txt: {{ c[1] }}; --c-pista: {{ c[2] }}; --v: {{ v|round(1) }};">
+                        <div class="rasgo-etiqueta"><span><b>{{ v|round|int }}%</b> {{ area }}</span></div>
+                        <div class="rasgo-barra" role="img" aria-label="{{ area }}: {{ v|round|int }} por ciento">
+                            <div class="rasgo-relleno"></div>
+                            <span class="rasgo-perilla"></span>
+                        </div>
+                        <div class="rasgo-polos">
+                            <span{% if ip is not none and (cp is none or ip >= cp) %} class="gana"{% endif %}>Intereses {{ (ip|round|int ~ '%') if ip is not none else '—' }}</span>
+                            <span{% if cp is not none and (ip is none or cp > ip) %} class="gana"{% endif %}>Competencias {{ (cp|round|int ~ '%') if cp is not none else '—' }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <details class="rasgos-tabla">
+                    <summary>Ver tabla de puntajes</summary>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Área</th><th>Intereses</th><th>Competencias</th><th>Combinado</th></tr></thead>
+                            <tbody>
+                            {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}
+                            {% set ip = datos.get('interes_pct') %}{% set cp = datos.get('competencia_pct') %}
+                            <tr>
+                                <td><strong>{{ area }}</strong></td>
+                                <td>{{ (ip|round|int ~ '%') if ip is not none else '—' }}</td>
+                                <td>{{ (cp|round|int ~ '%') if cp is not none else '—' }}</td>
+                                <td>{{ (datos.get('normalizado') or 0)|round|int }}%</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
 
-    <!-- Recomendaciones -->
-    {% if perfil.recomendaciones %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Recomendaciones</h2>
-        </div>
-        <ul class="lista-limpia">
-        {% for linea in perfil.recomendaciones.split('\n') %}
-            {% if linea.strip() %}<li>{{ linea.strip() }}</li>{% endif %}
-        {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-
-    <!-- Predicción Vocacional — solo visible para el estudiante, no para rol TI -->
-    {% if session.get('rol') != 'ti' %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Predicción vocacional</h2>
-        </div>
-        {% if prediccion and prediccion.tiene_prediccion %}
-        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem;">
-            Según la tendencia de tus resultados, tu próxima aplicación probablemente reforzará el perfil
-            <strong style="color: var(--primary);">{{ prediccion.perfil_predicho }}</strong>.
-        </p>
-        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start;">
-            <div style="flex: 1; min-width: 280px;">
-                <div class="chart-container" style="height: 260px;">
-                    <canvas id="chartPrediccion"></canvas>
+            <div class="card">
+                <div class="card-header"><h2>Intereses y competencias</h2></div>
+                <div class="chart-container chart-radar">
+                    <canvas id="chartHolland" aria-label="Gráfico radar de intereses y competencias por área RIASEC" role="img"></canvas>
                 </div>
             </div>
-            <div style="min-width: 220px;">
-                <div class="table-container">
-                <table class="tabla-numeros">
-                    <thead><tr><th>Área</th><th>Actual</th><th>Predicción</th><th>Tendencia</th></tr></thead>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if programas %}
+    <!-- 3. Programas -->
+    <section id="cap-programas" class="capitulo">
+        <div class="card">
+            <div class="card-header">
+                <h2>Programas en la USB</h2>
+                <span class="rasgos-ayuda">Ordenados por afinidad con tu perfil completo</span>
+            </div>
+            <div class="programas-grid">
+                {% for p in programas %}
+                <a class="programa" href="{{ p.url }}" target="_blank" rel="noopener">
+                    <span class="programa-af">{{ p.af }}%</span>
+                    <span class="programa-nombre">{{ p.n }}</span>
+                    <span class="programa-meta">{{ p.f }} · Ver programa <span aria-hidden="true">&#8599;</span></span>
+                </a>
+                {% endfor %}
+            </div>
+            <a class="enlace-mapa" href="{{ url_for('estudiante.explorador', aplicacion_id=aplicacion.id) }}">Ver los 18 programas en el mapa vocacional <span aria-hidden="true">&rarr;</span></a>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if perfil.fortalezas or recomendaciones %}
+    <!-- 4. Fortalezas -->
+    <section id="cap-fortalezas" class="capitulo">
+        <div class="card">
+            <div class="card-header"><h2>Fortalezas</h2></div>
+            {% if perfil.fortalezas %}
+            <ul class="lista-limpia">
+            {% for linea in perfil.fortalezas.splitlines() %}
+                {% if linea.strip() %}<li>{{ linea.strip().lstrip('•').strip() }}</li>{% endif %}
+            {% endfor %}
+            </ul>
+            {% endif %}
+            {% for r in recomendaciones %}
+            <p class="nota-recomendacion">{{ r }}</p>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- 5. Qué sigue -->
+    <section id="cap-sigue" class="capitulo">
+        <div class="card">
+            <div class="card-header"><h2>Qué sigue</h2></div>
+            <div class="siguiente">
+                <img class="siguiente-fox" src="{{ url_for('static', filename='img/mascota/mascota-camino.webp') }}" alt="" onerror="this.remove()">
+                <ol class="siguiente-pasos">
+                    <li><a class="paso" href="{{ url_for('estudiante.explorador', aplicacion_id=aplicacion.id) }}">
+                        <b>Explora el mapa</b><span>Compara los 18 pregrados de la USB con tu perfil.</span></a></li>
+                    {% if programas %}
+                    <li><a class="paso" href="{{ programas[0].url }}" target="_blank" rel="noopener">
+                        <b>Conoce {{ programas[0].n }}</b><span>Tu programa más afín: plan de estudios y requisitos en la página de la USB.</span></a></li>
+                    {% endif %}
+                    <li><div class="paso">
+                        <b>Habla con orientación</b><span>Lleva tu informe al orientador de tu colegio o a Bienestar de la USB.</span></div></li>
+                </ol>
+            </div>
+            {% if not evolucion %}
+            <p class="nota-repetir">Repite el test en unos meses para ver cómo cambian tus intereses.</p>
+            {% endif %}
+        </div>
+
+        {% if evolucion %}
+        <div class="card">
+            <div class="card-header">
+                <h2>Evolución vocacional</h2>
+                <span class="rasgos-ayuda">Tus perfiles a lo largo del tiempo</span>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="chartEvolucion"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 1rem;">
+                <table>
+                    <thead><tr><th>Fecha</th><th>Perfil principal</th><th>Perfil secundario</th><th>Código RIASEC</th></tr></thead>
                     <tbody>
-                    {% for t in prediccion.tendencias %}
+                    {% for h in evolucion %}
                     <tr>
-                        <td><strong>{{ t.area }}</strong></td>
-                        <td>{{ t.puntaje_actual|round|int }}%</td>
-                        <td>{{ t.prediccion_proxima|round|int }}%</td>
-                        <td class="tendencia">
-                            {% if t.tendencia == 'creciente' %}<span aria-hidden="true">&#8599;</span> Sube
-                            {% elif t.tendencia == 'decreciente' %}<span aria-hidden="true">&#8600;</span> Baja
-                            {% else %}<span aria-hidden="true">&#8594;</span> Estable{% endif %}
-                        </td>
+                        <td>{{ h.fecha or '—' }}</td>
+                        <td><strong>{{ h.perfil_principal or '—' }}</strong></td>
+                        <td>{{ h.perfil_secundario or '—' }}</td>
+                        <td>{{ h.codigo_riasec or '—' }}</td>
                     </tr>
                     {% endfor %}
                     </tbody>
                 </table>
-                </div>
-                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.75rem;">Basado en {{ prediccion.basado_en }} aplicaciones completadas.</p>
             </div>
         </div>
-        {% else %}
-        <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary);">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:0.75rem; opacity:0.4;" aria-hidden="true"><path d="M3 3l18 18M10.5 10.677a2 2 0 0 0 2.823 2.823"/><path d="M7.362 5.104a9.997 9.997 0 0 1 14.533 14.533M3 3l18 18"/></svg>
-            <p style="font-size: 0.9rem; margin:0;">Se necesitan al menos <strong>2 aplicaciones completadas</strong> para generar una predicción vocacional.</p>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Completa más pruebas para desbloquear esta función.</p>
-        </div>
         {% endif %}
-    </div>
-    {% endif %}{# fin bloque prediccion visible solo para no-TI #}
 
-    <!-- Explorer CTA -->
-    <div class="card card-accent" style="margin: 1.5rem 0; display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem;">
-        <div style="flex:1; min-width: 220px;">
-            <div style="display:flex; align-items:center; gap: 0.6rem; margin-bottom: 0.4rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                <span style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent-text);">Mapa vocacional</span>
+        {% if prediccion and prediccion.tiene_prediccion and session.get('rol') != 'ti' %}
+        <div class="card">
+            <div class="card-header"><h2>Predicción vocacional</h2></div>
+            <p class="rasgos-ayuda">Según la tendencia de tus sesiones, la próxima probablemente reforzará el perfil <strong>{{ prediccion.perfil_predicho }}</strong>.</p>
+            <div class="chart-container" style="height: 260px;">
+                <canvas id="chartPrediccion"></canvas>
             </div>
-            <h3 style="color:var(--primary); margin-bottom:0.3rem;">Explora los programas de la USB en el mapa</h3>
-            <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">Los 18 pregrados de la San Buenaventura ubicados en el hexágono Holland, con tu afinidad con cada uno.</p>
-        </div>
-        <a href="{{ url_for('estudiante.explorador', aplicacion_id=aplicacion.id) }}" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            Abrir mapa vocacional
-        </a>
-    </div>
-
-    <!-- Evolución Vocacional -->
-    {% if evolucion and evolucion | length >= 1 %}
-    <div class="card" style="margin-top: 1.5rem;">
-        <div class="card-header">
-            <h2>Evolución vocacional</h2>
-            <span style="font-size:0.82rem; color:var(--text-secondary);">Tu historial de perfiles a lo largo del tiempo</span>
-        </div>
-        {% if evolucion | length > 1 %}
-        <div class="chart-container" style="height: 300px;">
-            <canvas id="chartEvolucion"></canvas>
         </div>
         {% endif %}
-        <!-- Tabla del historial de perfiles -->
-        <div class="table-container" style="margin-top: 1rem;">
-            <table style="font-size: 0.85rem;">
-                <thead><tr>
-                    <th>Fecha</th>
-                    <th>Perfil Principal</th>
-                    <th>Perfil Secundario</th>
-                    <th>Código RIASEC</th>
-                </tr></thead>
-                <tbody>
-                {% for h in evolucion %}
-                <tr>
-                    <td>{{ h.fecha or '—' }}</td>
-                    <td><strong>{{ h.perfil_principal or '—' }}</strong></td>
-                    <td>{{ h.perfil_secundario or '—' }}</td>
-                    <td><code style="background:#f5f5f5; padding:2px 6px; border-radius:4px;">{{ h.codigo_riasec or '—' }}</code></td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
 
-    <!-- Acciones -->
-    <div style="text-align: center; margin: 2rem 0;">
-        <a href="{{ url_for('estudiante.descargar_reporte', aplicacion_id=aplicacion.id) }}" class="btn btn-primary btn-lg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Descargar Reporte PDF
-        </a>
-        {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
-        <a href="{{ url_for('admin.consultas') }}" class="btn btn-secondary btn-lg" style="margin-left: 1rem;">
-            ← Volver a Consultas
-        </a>
-        {% else %}
-        <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-secondary btn-lg" style="margin-left: 1rem;">
-            ← Volver al Inicio
-        </a>
-        {% endif %}
-    </div>
+        <div class="acciones-resultados">
+            <a href="{{ url_for('estudiante.descargar_reporte', aplicacion_id=aplicacion.id) }}" class="btn btn-primary btn-lg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Descargar informe PDF
+            </a>
+            {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
+            <a href="{{ url_for('admin.consultas') }}" class="btn btn-secondary btn-lg">&larr; Volver a consultas</a>
+            {% else %}
+            <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-secondary btn-lg">&larr; Volver al inicio</a>
+            {% endif %}
+        </div>
+    </section>
 
     {% else %}
     <div class="card">
@@ -326,9 +284,9 @@
             <h3>Resultados no disponibles</h3>
             <p>Los resultados de tu prueba aún no han sido procesados.</p>
             {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
-            <a href="{{ url_for('admin.consultas') }}" class="btn btn-primary" style="margin-top: 1rem;">← Volver a Consultas</a>
+            <a href="{{ url_for('admin.consultas') }}" class="btn btn-primary">&larr; Volver a consultas</a>
             {% else %}
-            <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-primary" style="margin-top: 1rem;">← Volver</a>
+            <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-primary">&larr; Volver</a>
             {% endif %}
         </div>
     </div>
@@ -337,6 +295,26 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+// Barra de capítulos: marca el capítulo visible y lo mantiene a la vista en el celular.
+(function () {
+    const nav = document.querySelector('.cap-nav');
+    if (!nav || !('IntersectionObserver' in window)) return;
+    const enlaces = {};
+    nav.querySelectorAll('a').forEach(function (a) { enlaces[a.getAttribute('href').slice(1)] = a; });
+    const obs = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (e) {
+            const a = enlaces[e.target.id];
+            if (!e.isIntersecting || !a) return;
+            nav.querySelectorAll('a').forEach(function (x) { x.classList.remove('activo'); x.removeAttribute('aria-current'); });
+            a.classList.add('activo');
+            a.setAttribute('aria-current', 'true');
+            nav.scrollTo({ left: a.offsetLeft - 16, behavior: 'smooth' });
+        });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    document.querySelectorAll('.capitulo').forEach(function (s) { obs.observe(s); });
+})();
+</script>
 <script>
 /* ── Estilo común de las gráficas de resultados ─────────────────────────
    Tipografía del sitio, tinta para textos, rejilla en línea fina y sólida,
