@@ -5,6 +5,7 @@ from ..utils import api_request, api_requests_parallel, api_request_file, jwt_is
 from ..programas_usb import (
     programas_recomendados, programas_para_mapa, definicion_perfil,
     sesiones_distintas, recomendaciones_accionables, fortalezas_sin_porcentaje,
+    areas_por_porcentaje,
 )
 
 estudiante_routes = Blueprint('estudiante', __name__)
@@ -350,6 +351,8 @@ def resultados(aplicacion_id):
                            programas=programas_recomendados(perfil.get('perfil_principal'),
                                                             perfil.get('perfil_secundario')),
                            definicion=definicion_perfil(comparativo) if hay_puntajes else None,
+                           orden_areas=areas_por_porcentaje(
+                               comparativo, (perfil.get('datos_json') or {}).get('ranking_intereses')),
                            fortalezas=fortalezas_sin_porcentaje(perfil.get('fortalezas')),
                            recomendaciones=recomendaciones_accionables(
                                perfil.get('recomendaciones'), perfil.get('descripcion')),
@@ -450,6 +453,8 @@ def explorador(aplicacion_id):
     return render_template('estudiante/explorador.html',
                            perfil=perfil,
                            puntajes=comparativo,
+                           orden_areas=areas_por_porcentaje(
+                               comparativo, (perfil.get('datos_json') or {}).get('ranking_intereses')),
                            programas=programas_para_mapa(perfil.get('perfil_principal'),
                                                          perfil.get('perfil_secundario')),
                            aplicacion_id=aplicacion_id)

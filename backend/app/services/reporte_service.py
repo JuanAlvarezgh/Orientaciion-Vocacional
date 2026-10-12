@@ -159,14 +159,16 @@ class ReporteService:
 
     @staticmethod
     def _resultados_por_area(dj, st):
-        """Barras de los seis campos en el orden del perfil, con el % de la página."""
+        """Barras de los seis campos de mayor a menor, con el % de la página.
+        Los empates quedan en el orden del perfil."""
         puntajes = dj.get('puntajes_por_area', {})
         orden = [a for a in (dj.get('ranking_intereses') or []) if a in AREAS]
         orden += [a for a in AREAS if a not in orden]
         filas = [(area, *porcentajes_area(puntajes.get(area))) for area in orden]
+        filas.sort(key=lambda f: -f[1])
         return [
             Paragraph('Tus resultados por área', st['h2']),
-            Paragraph('Porcentaje combinado de intereses y competencias, el mismo de la página de resultados.',
+            Paragraph('De mayor a menor. Porcentaje combinado de intereses y competencias, el mismo de la página de resultados.',
                       st['ayuda']),
             Spacer(1, 10),
             BarrasAreas(filas, ANCHO_UTIL),

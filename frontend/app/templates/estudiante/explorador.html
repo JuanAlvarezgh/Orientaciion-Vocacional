@@ -163,7 +163,6 @@ const PUNTAJES = {
   'Emprendedor':  {{ (puntajes.get('Emprendedor',  {}) or {}).get('normalizado', 0) | round | int }},
   'Convencional': {{ (puntajes.get('Convencional', {}) or {}).get('normalizado', 0) | round | int }},
 };
-const RANKING = {{ (perfil.get('datos_json', {}) or {}).get('ranking_intereses', []) | tojson }};
 const PERFIL_PRINCIPAL = {{ (perfil.get('perfil_principal') or '') | tojson }};
 const PERFIL_SECUNDARIO = {{ (perfil.get('perfil_secundario') or '') | tojson }};
 
@@ -171,9 +170,8 @@ const COLOR_AREA = { 'Realista': '#eb6834', 'Investigador': '#2a78d6', 'Artísti
 const COLOR_GRUPO = { principal: '#b85a00', secundario: '#e9a15c', otro: '#c9c6d0' };
 const ETIQUETA_GRUPO = { principal: 'Recomendado', secundario: 'Perfil secundario', otro: 'Otro campo' };
 
-// Campos en el orden de tu perfil (si no hay ranking, de mayor a menor porcentaje)
-const AREAS = (RANKING.length ? RANKING.slice() : Object.keys(PUNTAJES).sort((a, b) => PUNTAJES[b] - PUNTAJES[a]))
-  .filter(a => a in PUNTAJES);
+// Campos de mayor a menor porcentaje (frontend/app/programas_usb.py: areas_por_porcentaje)
+const AREAS = {{ orden_areas | tojson }}.filter(a => a in PUNTAJES);
 Object.keys(PUNTAJES).forEach(a => { if (!AREAS.includes(a)) AREAS.push(a); });
 const POS_AREA = {};
 AREAS.forEach((a, i) => { POS_AREA[a] = i; });

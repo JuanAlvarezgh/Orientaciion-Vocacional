@@ -87,7 +87,6 @@
     </section>
 
     {% if dj.puntajes_por_area %}
-    {% set orden_areas = dj.ranking_intereses or (dj.puntajes_por_area.items()|sort(attribute='1.normalizado', reverse=True)|map(attribute='0')|list) %}
     <!-- 2. Tus áreas -->
     <section id="cap-areas" class="capitulo">
         {% if definicion %}
@@ -113,7 +112,7 @@
             <div class="card rasgos-card">
                 <div class="card-header">
                     <h2>Tu perfil por área</h2>
-                    <span class="rasgos-ayuda">% combinado de intereses y competencias</span>
+                    <span class="rasgos-ayuda">De mayor a menor &middot; % combinado de intereses y competencias</span>
                 </div>
                 <div class="rasgos">
                     {% for area in orden_areas %}{% set datos = dj.puntajes_por_area.get(area, {}) %}

@@ -119,3 +119,12 @@ def test_fortalezas_quitan_el_porcentaje_del_backend():
         ('Realista', 'Habilidad manual'),
         ('', 'Línea sin formato'),
     ]
+
+
+def test_areas_de_mayor_a_menor_y_empates_en_el_orden_del_perfil():
+    from app.programas_usb import areas_por_porcentaje
+    puntajes = _puntajes(R=63, I=52, A=63, S=60, E=43, C=63)
+    ranking = ['Realista', 'Convencional', 'Investigador', 'Social', 'Artístico', 'Emprendedor']
+    assert areas_por_porcentaje(puntajes, ranking) == [
+        'Realista', 'Convencional', 'Artístico', 'Social', 'Investigador', 'Emprendedor']
+    assert areas_por_porcentaje(_puntajes(R=10, I=90), [])[:2] == ['Investigador', 'Realista']

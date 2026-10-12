@@ -136,3 +136,12 @@ def fortalezas_sin_porcentaje(texto):
         m = _FORTALEZA.match(linea)
         salida.append((m.group('area').strip(), m.group('texto').strip()) if m else ('', linea))
     return salida
+
+
+def areas_por_porcentaje(puntajes, ranking=None):
+    """Campos de mayor a menor porcentaje combinado; los empates quedan en el
+    orden del perfil (ranking) y, si no lo hay, en el orden R-I-A-S-E-C."""
+    base = [a for a in (ranking or []) if a in puntajes]
+    base += [a for a in AREAS if a in puntajes and a not in base]
+    base += [a for a in puntajes if a not in base]
+    return sorted(base, key=lambda a: -float((puntajes.get(a) or {}).get('normalizado') or 0))
