@@ -187,13 +187,6 @@
                 <h2>Programas en la USB</h2>
                 <span class="rasgos-ayuda">Pregrados de la San Buenaventura Medellín relacionados con tus campos más fuertes</span>
             </div>
-            {% if (fig[0] ~ '-accion') in escenas %}
-            <div class="escena-trio">
-                {% for archivo in fig[1] %}
-                <img src="{{ url_for('static', filename='img/mascota/' ~ archivo) }}" alt="">
-                {% endfor %}
-            </div>
-            {% endif %}
             <div class="programas-grid">
                 {% for p in programas %}
                 <a class="programa{% if p.grupo == 'secundario' %} programa-sec{% endif %}" href="{{ p.url }}" target="_blank" rel="noopener">

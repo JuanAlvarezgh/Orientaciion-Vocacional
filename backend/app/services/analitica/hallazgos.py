@@ -275,7 +275,7 @@ def h_estrato(filas):
                           categorias=['1 y 2', '3 y 4', '5 y 6'],
                           extra='El estrato sale de la dirección del estudiante (el estrato de los medidores '
                                 'residenciales de esa dirección). Se agrupa de a dos para tener casos suficientes.')
-    t['metodo']['pasos'].insert(0, 'El estrato no se le pregunta al estudiante: sale de la dirección que confirmó en el mapa.')
+    t['metodo']['pasos'].insert(0, 'El estrato no se le pregunta al estudiante: sale de la dirección que escribió al registrarse.')
     return t
 
 
@@ -411,7 +411,7 @@ def h_distancia(filas):
     of = [x['distancia_colegio_m'] / 1000 for x in f if x['sector'] == 'Oficial']
     pv = [x['distancia_colegio_m'] / 1000 for x in f if x['sector'] == 'Privado']
     metodo = {
-        'pasos': ['Se mide la distancia en línea recta entre la casa confirmada en el mapa y la sede del colegio.',
+        'pasos': ['Se mide la distancia en línea recta entre la casa (ubicada a partir de la dirección) y la sede del colegio.',
                   'Se dibuja la función de distribución empírica (ECDF) de cada sector.',
                   'Se comparan las dos distribuciones con la prueba de Kolmogorov-Smirnov, que mira la mayor separación entre las curvas.'],
         'formulas': [r'd = 2R\arcsin\sqrt{\sin^2\tfrac{\Delta\varphi}{2} + \cos\varphi_1\cos\varphi_2\sin^2\tfrac{\Delta\lambda}{2}}',

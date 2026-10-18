@@ -36,13 +36,11 @@ def inicio():
         ('mis_apps',   'GET', '/aplicaciones/mis-aplicaciones'),
         ('disponibles','GET', '/aplicaciones/disponibles'),
         ('demo',       'GET', '/demografico/datos/completo'),
-        ('escolar',    'GET', '/escolar/mio'),
     ])
 
     aplicaciones = r['mis_apps'][0].get('aplicaciones', [])       if r['mis_apps'][1]    == 200 else []
     disponibles  = r['disponibles'][0].get('configuraciones', []) if r['disponibles'][1] == 200 else []
     datos_completos = r['demo'][0].get('completo', False) if r['demo'][0] else False
-    escolar_completo = r['escolar'][0].get('completo', False) if r['escolar'][1] == 200 else True
 
     # Construir 3 tarjetas unificadas: una por config disponible con estado real del estudiante
     # Para cada config, buscar la aplicación más reciente del estudiante en esa config
@@ -73,8 +71,7 @@ def inicio():
     return render_template('estudiante/inicio.html',
                            prueba_cards=prueba_cards,
                            historial=historial,
-                           datos_demograficos_completos=datos_completos,
-                           escolar_completo=escolar_completo)
+                           datos_demograficos_completos=datos_completos)
 
 
 @estudiante_routes.route('/datos-demograficos', methods=['GET', 'POST'])
@@ -126,7 +123,7 @@ def datos_demograficos():
 # existen en static/img/mascota, así la página no cambia hasta que llega cada imagen.
 ESCENAS = ('realista-accion', 'investigador-accion', 'artistico-accion', 'social-accion',
            'emprendedor-accion', 'convencional-accion', 'tus-areas', 'fortalezas', 'evolucion',
-           'selfie', 'mitad-cuestionario', 'explorador')
+           'selfie', 'mitad-cuestionario')
 
 
 def escenas_disponibles():
@@ -134,38 +131,6 @@ def escenas_disponibles():
     from flask import current_app
     carpeta = os.path.join(current_app.static_folder, 'img', 'mascota')
     return {e for e in ESCENAS if os.path.exists(os.path.join(carpeta, f'{e}.webp'))}
-
-
-def _destino_seguro(valor, por_defecto):
-    return valor if valor and valor.startswith('/') and not valor.startswith('//') else por_defecto
-
-
-@estudiante_routes.route('/mi-colegio')
-@login_required
-def mi_colegio():
-    """Colegio, edad y dirección confirmada en el mapa."""
-    r = api_requests_parallel([
-        ('perfil', 'GET', '/escolar/mio'),
-        ('municipios', 'GET', '/escolar/municipios'),
-    ])
-    perfil = r['perfil'][0] if r['perfil'][1] == 200 else {}
-    municipios = r['municipios'][0].get('municipios', []) if r['municipios'][1] == 200 else []
-    return render_template('estudiante/mi_colegio.html', perfil=perfil, municipios=municipios,
-                           siguiente=_destino_seguro(request.args.get('next'), url_for('estudiante.inicio')))
-
-
-@estudiante_routes.route('/api/geocodificar', methods=['POST'])
-@login_required
-def api_geocodificar():
-    data, status = api_request('POST', '/escolar/geocodificar', request.get_json(silent=True) or {})
-    return jsonify(data), status
-
-
-@estudiante_routes.route('/api/perfil-escolar', methods=['PUT'])
-@login_required
-def api_perfil_escolar():
-    data, status = api_request('PUT', '/escolar/mio', request.get_json(silent=True) or {})
-    return jsonify(data), status
 
 
 @estudiante_routes.route('/cuestionario/<int:config_id>')

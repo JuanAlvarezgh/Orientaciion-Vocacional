@@ -116,8 +116,13 @@ def _nominatim(texto, municipio):
     return {'lat': float(datos[0]['lat']), 'lon': float(datos[0]['lon']), 'estrato': None, 'precision': 'osm'}
 
 
-def geocodificar(texto, municipio, ruta=None, usar_osm=True):
-    """Ubica una dirección escrita. Devuelve siempre un dict con ``encontrada``."""
+def geocodificar(texto, municipio, ruta=None, usar_osm=None):
+    """Ubica una dirección escrita. Devuelve siempre un dict con ``encontrada``.
+
+    ``usar_osm`` por defecto sigue la variable GEOCODIFICAR_OSM (1 si no está).
+    """
+    if usar_osm is None:
+        usar_osm = os.getenv('GEOCODIFICAR_OSM', '1') != '0'
     mpio = municipio_canonico(municipio)
     d = normalizar(texto)
     respuesta = {

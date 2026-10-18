@@ -59,7 +59,8 @@ def _levantar():
     base = Path(temporal, 'pruebas.db').as_posix()
     env = dict(os.environ, FLASK_ENV='development', DATABASE_URL=f'sqlite:///{base}',
                ADMIN_EMAIL=ADMIN_TI['email'], ADMIN_PASSWORD=ADMIN_TI['password'],
-               ALLOWED_ORIGINS=f'http://127.0.0.1:{PUERTO_FRONT}', PYTHONIOENCODING='utf-8')
+               ALLOWED_ORIGINS=f'http://127.0.0.1:{PUERTO_FRONT}', PYTHONIOENCODING='utf-8',
+               GEOCODIFICAR_OSM='0')
     salida = open(Path(temporal, 'servidores.log'), 'w', encoding='utf-8')
     py = sys.executable
     subprocess.run([py, 'init_deploy.py'], cwd=BACKEND, env=env, check=True, stdout=salida, stderr=salida)

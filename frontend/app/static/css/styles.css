@@ -1833,24 +1833,10 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
 }
 
 /* =====================================================
-   COLEGIO Y DIRECCIÓN DEL ESTUDIANTE (2026-10)
+   BUSCADOR DE COLEGIOS DEL REGISTRO (2026-10)
    ===================================================== */
 /* El atributo hidden tiene que ganarle a display:grid/flex de las utilidades. */
 [hidden] { display: none !important; }
-.mc { max-width: 760px; }
-.mc-form { display: flex; flex-direction: column; gap: var(--sp-5); }
-.mc-bloque { margin: 0; }
-.mc-titulo { font-size: var(--fs-lg); margin: 0 0 var(--sp-4); }
-.mc-check { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); color: var(--text-secondary); margin-bottom: var(--sp-4); cursor: pointer; }
-.mc-edad { max-width: 160px; }
-.mc-opcional { font-weight: 400; color: var(--text-secondary); }
-.mc-fila { display: flex; gap: var(--sp-2); }
-.mc-fila .form-control { flex: 1; min-width: 0; }
-.mc-fila .btn { white-space: nowrap; }
-.mc-ayuda { font-size: var(--fs-sm); color: var(--text-secondary); margin: var(--sp-2) 0 0; }
-.mc-mapa { height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-top: var(--sp-4); }
-.mc-acciones { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-5); }
-.mc-acciones > a { color: var(--text-secondary); font-size: var(--fs-sm); text-decoration: underline; }
 .mc-combo { position: relative; }
 .bc-lista { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none;
     background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.08); max-height: 300px; overflow-y: auto; }
@@ -1859,14 +1845,8 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
 .bc-nombre { font-weight: 600; font-size: var(--fs-sm); color: var(--text-primary); }
 .bc-detalle { font-size: var(--fs-xs); color: var(--text-secondary); }
 .bc-vacio { padding: 10px; font-size: var(--fs-sm); color: var(--text-secondary); }
-.aviso-escolar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); }
-.aviso-escolar p { margin: 0; color: var(--text-secondary); font-size: var(--fs-sm); }
-@media (max-width: 640px) {
-    .mc-fila { flex-direction: column; }
-    .mc-acciones { flex-direction: column-reverse; align-items: stretch; }
-    .mc-mapa { height: 260px; }
-    .aviso-escolar { flex-direction: column; align-items: flex-start; }
-}
+.mc-check { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); color: var(--text-secondary); cursor: pointer; }
+.mc-ayuda { font-size: var(--fs-sm); color: var(--text-secondary); margin: var(--sp-2) 0 0; }
 
 /* =====================================================
    ESTADÍSTICA AVANZADA (2026-10)
@@ -1997,9 +1977,6 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
    ===================================================== */
 .con-escena { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: var(--sp-6); align-items: center; }
 .con-escena .escena { max-width: 210px; max-height: 220px; width: auto; height: auto; justify-self: end; }
-.escena-trio { float: right; display: flex; align-items: flex-end; margin: -8px 0 var(--sp-4) var(--sp-5); }
-.escena-trio img { height: 150px; width: auto; margin-left: -26px; }
-.escena-trio img:first-child { margin-left: 0; }
 .rh-accion .rh-figura { height: 260px; width: auto; }
 .cc-cabeza { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); }
 .cc-cabeza img { height: 56px; width: auto; }
@@ -2007,8 +1984,6 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
 @media (max-width: 640px) {
     .con-escena { grid-template-columns: 1fr; }
     .con-escena .escena { order: -1; width: 140px; justify-self: center; }
-    .escena-trio { float: none; justify-content: center; margin: 0 0 var(--sp-4); }
-    .escena-trio img { height: 110px; }
     .rh-accion .rh-figura { height: 190px; }
 }
 .escena-cabeza { height: 72px; width: auto; margin-left: auto; }
@@ -2020,13 +1995,11 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
 .q-mitad img { height: 92px; width: auto; }
 .q-mitad p { margin: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-sm); color: var(--text-secondary); }
 .q-mitad b { color: var(--text-primary); font-size: var(--fs-body); }
-.expl-fox { float: right; height: 120px; width: auto; margin: 0 0 8px 16px; }
 .ea-cabecera { align-items: center; }
 .ea-cabecera-texto { flex: 1; min-width: 260px; }
 .ea-fox { height: 96px; width: auto; flex: none; }
 .mb-fox { float: right; height: 110px; width: auto; margin: 0 0 8px 12px; }
 @media (max-width: 640px) {
     .q-mitad { left: 12px; right: 12px; bottom: 12px; max-width: none; }
-    .expl-fox { height: 84px; }
     .ea-fox { height: 72px; }
 }

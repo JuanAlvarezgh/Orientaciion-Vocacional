@@ -21,8 +21,8 @@ de orientación vocacional serán tratados con las siguientes finalidades:
 4. Realizar investigación institucional con datos anonimizados.
 
 Para el análisis institucional se piden también el colegio, la edad y la
-dirección de residencia. La dirección se ubica en un mapa y la confirma el
-titular. Esa ubicación solo la consulta el equipo de Bienestar y se usa para
+dirección de residencia. La dirección se ubica automáticamente en un mapa.
+Esa ubicación solo la consulta el equipo de Bienestar y se usa para
 estudiar, de forma agregada, de dónde vienen los estudiantes y qué colegios
 faltan por acompañar. Nunca se publica junto con el nombre.
 

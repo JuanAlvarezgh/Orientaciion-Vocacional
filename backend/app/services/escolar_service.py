@@ -10,10 +10,7 @@ from .geo import geocodificador
 from .geo.direcciones import municipio_canonico, sin_tildes
 
 RUTA_CATALOGO = os.path.join(os.path.dirname(__file__), '..', 'recursos', 'geo', 'colegios_valle_aburra.json')
-CAJA_VALLE = geocodificador.CAJA_VALLE  # oeste, norte, este, sur
 EDAD_MIN, EDAD_MAX = 12, 25
-# Si el estudiante mueve el pin más que esto, la ubicación pasa a ser manual.
-TOLERANCIA_PIN_M = 25
 
 
 def cargar_catalogo(ruta=RUTA_CATALOGO):
@@ -57,13 +54,26 @@ def perfil_de(usuario_id):
     return PerfilEscolar.query.filter_by(usuario_id=usuario_id).first()
 
 
-def _en_valle(lat, lon):
-    oeste, norte, este, sur = CAJA_VALLE
-    return sur <= lat <= norte and oeste <= lon <= este
+def validar(datos):
+    """Revisa los datos escolares antes de crear la cuenta. Lanza ValueError con el mensaje."""
+    codigo = (datos.get('sede_codigo') or '').strip()
+    if codigo and not SedeEducativa.query.filter_by(codigo=codigo).first():
+        raise ValueError('El colegio elegido no está en el catálogo.')
+    if datos.get('edad') not in (None, ''):
+        try:
+            edad = int(datos['edad'])
+        except (TypeError, ValueError):
+            raise ValueError('La edad debe ser un número.')
+        if not EDAD_MIN <= edad <= EDAD_MAX:
+            raise ValueError(f'La edad debe estar entre {EDAD_MIN} y {EDAD_MAX} años.')
+    if datos.get('direccion') and not municipio_canonico(datos.get('municipio')):
+        raise ValueError('Elige el municipio del Valle de Aburrá donde vives.')
 
 
 def guardar_perfil(usuario_id, datos):
-    """Valida y guarda el perfil escolar. Lanza ValueError con un mensaje para el estudiante."""
+    """Guarda colegio, edad y dirección. La dirección se ubica en el servidor (índice local
+    y, si no aparece, OpenStreetMap); si no se encuentra, se guarda solo el texto."""
+    validar(datos)
     perfil = perfil_de(usuario_id) or PerfilEscolar(usuario_id=usuario_id)
 
     if 'sede_codigo' in datos or 'colegio_texto' in datos:
@@ -71,51 +81,28 @@ def guardar_perfil(usuario_id, datos):
         texto = (datos.get('colegio_texto') or '').strip()[:200] or None
         if codigo:
             sede = SedeEducativa.query.filter_by(codigo=codigo).first()
-            if not sede:
-                raise ValueError('El colegio elegido no está en el catálogo.')
             perfil.sede_codigo, perfil.colegio_texto, perfil.sector = codigo, None, sede.sector
         elif texto:
-            sector = datos.get('sector')
-            if sector not in ('Oficial', 'Privado'):
-                raise ValueError('Indica si tu colegio es oficial o privado.')
-            perfil.sede_codigo, perfil.colegio_texto, perfil.sector = None, texto, sector
+            # Colegio escrito a mano: el sector no se conoce.
+            perfil.sede_codigo, perfil.colegio_texto, perfil.sector = None, texto, None
 
-    if 'edad' in datos and datos.get('edad') not in (None, ''):
-        try:
-            edad = int(datos['edad'])
-        except (TypeError, ValueError):
-            raise ValueError('La edad debe ser un número.')
-        if not EDAD_MIN <= edad <= EDAD_MAX:
-            raise ValueError(f'La edad debe estar entre {EDAD_MIN} y {EDAD_MAX} años.')
-        perfil.edad = edad
+    if datos.get('edad') not in (None, ''):
+        perfil.edad = int(datos['edad'])
 
-    if 'lat' in datos:
+    direccion = (datos.get('direccion') or '').strip()[:200]
+    if direccion:
         mpio = municipio_canonico(datos.get('municipio'))
-        if not mpio:
-            raise ValueError('Elige tu municipio del Valle de Aburrá.')
-        try:
-            lat, lon = float(datos['lat']), float(datos['lon'])
-        except (TypeError, ValueError, KeyError):
-            raise ValueError('Ubica tu casa en el mapa.')
-        if not _en_valle(lat, lon):
-            raise ValueError('El punto del mapa queda por fuera del Valle de Aburrá.')
-        direccion = (datos.get('direccion') or '').strip()[:200]
-        if not direccion:
-            raise ValueError('Escribe tu dirección.')
-        # La precisión se recalcula aquí: no se confía en la que manda el navegador.
-        ubicada = geocodificador.geocodificar(direccion, mpio, usar_osm=False)
-        if ubicada['encontrada'] and geocodificador.distancia_m(lat, lon, ubicada['lat'], ubicada['lon']) <= TOLERANCIA_PIN_M:
-            precision = ubicada['precision']
-        elif datos.get('precision') == 'osm' and not datos.get('movido'):
-            precision = 'osm'
-        else:
-            precision = 'manual'
+        ubicada = geocodificador.geocodificar(direccion, mpio)
         perfil.municipio = mpio
         perfil.direccion = direccion
         perfil.direccion_normalizada = ubicada.get('normalizada')
-        perfil.complemento = (datos.get('complemento') or ubicada.get('complemento') or '').strip()[:80] or None
-        perfil.lat, perfil.lon, perfil.precision = round(lat, 6), round(lon, 6), precision
-        perfil.estrato = geocodificador.estrato_cercano(lat, lon)
+        perfil.complemento = ubicada.get('complemento') or None
+        if ubicada['encontrada']:
+            perfil.lat, perfil.lon = round(ubicada['lat'], 6), round(ubicada['lon'], 6)
+            perfil.precision = ubicada['precision']
+            perfil.estrato = ubicada.get('estrato') or geocodificador.estrato_cercano(ubicada['lat'], ubicada['lon'])
+        else:
+            perfil.lat = perfil.lon = perfil.precision = perfil.estrato = None
 
     db.session.add(perfil)
     db.session.commit()
