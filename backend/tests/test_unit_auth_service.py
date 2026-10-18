@@ -29,6 +29,8 @@ def app():
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     with app.app_context():
+        # create_all y drop_all corren sobre esta base: nunca debe ser la de desarrollo.
+        assert ':memory:' in str(_db.engine.url), f'Base de pruebas inesperada: {_db.engine.url}'
         _db.create_all()
         # Cada prueba recibe una base SQLite nueva y roles mínimos.
         for nombre, desc in [('estudiante', 'Estudiante del sistema'), ('ti', 'Administrador TI')]:
