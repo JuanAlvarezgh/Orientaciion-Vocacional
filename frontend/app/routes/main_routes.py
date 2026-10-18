@@ -53,6 +53,15 @@ def perfil():
     return render_template('perfil.html', usuario=data.get('usuario', {}))
 
 
+@main_routes.route('/api/colegios')
+def colegios_publicos():
+    """Proxy público del buscador de colegios (lo usa también el registro, sin sesión)."""
+    data, status = api_request('GET', '/escolar/colegios', params={
+        'q': request.args.get('q', '')[:80], 'municipio': request.args.get('municipio', ''),
+    })
+    return jsonify(data), status
+
+
 @main_routes.route('/api/grados-publicos')
 def grados_publicos():
     """Proxy público: devuelve lista de grados al formulario de registro (sin auth)."""

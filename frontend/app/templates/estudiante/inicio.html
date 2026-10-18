@@ -26,6 +26,16 @@
     </div>
     {% endif %}
 
+    {% if not escolar_completo %}
+    <div class="card aviso-escolar">
+        <div>
+            <h3>Cuéntanos de tu colegio y dónde vives</h3>
+            <p>Toma un minuto y le ayuda a Bienestar a saber qué colegios y zonas acompañar.</p>
+        </div>
+        <a href="{{ url_for('estudiante.mi_colegio') }}" class="btn btn-secondary btn-sm">Completar</a>
+    </div>
+    {% endif %}
+
     <!-- Pruebas Disponibles -->
     {% if prueba_cards %}
     <h2 style="color: var(--primary); margin-bottom: 1rem;">Pruebas Disponibles</h2>

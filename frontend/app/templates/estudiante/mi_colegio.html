@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Tu colegio y tu dirección — Orientación Vocacional{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mc">
+    <div class="page-header">
+        <h1>Tu colegio y tu dirección</h1>
+        <p>Con esto el equipo de orientación sabe de qué colegios y zonas vienen los estudiantes. Solo lo ve Bienestar, nunca se publica con tu nombre.</p>
+    </div>
+
+    <form id="formEscolar" class="mc-form" novalidate>
+        <section class="card mc-bloque" data-colegio>
+            <h2 class="mc-titulo">Tu colegio</h2>
+            <div class="form-group mc-combo">
+                <label for="colegioBuscar">Busca tu colegio</label>
+                <input type="text" id="colegioBuscar" class="form-control" data-colegio-buscar autocomplete="off"
+                       role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="colegioLista"
+                       placeholder="Escribe parte del nombre, por ejemplo: Javiera Londoño"
+                       value="{{ perfil.colegio or '' }}">
+                <ul id="colegioLista" class="bc-lista" role="listbox" data-colegio-lista hidden></ul>
+                <input type="hidden" name="sede_codigo" value="{{ perfil.sede_codigo or '' }}">
+            </div>
+            <label class="mc-check"><input type="checkbox" id="noAparece" {% if perfil.colegio_texto %}checked{% endif %}> Mi colegio no aparece</label>
+            <div id="colegioManual" class="grid-2" {% if not perfil.colegio_texto %}hidden{% endif %}>
+                <div class="form-group">
+                    <label for="colegioTexto">Nombre del colegio</label>
+                    <input type="text" id="colegioTexto" class="form-control" maxlength="200" value="{{ perfil.colegio_texto or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="colegioSector">¿Es oficial o privado?</label>
+                    <select id="colegioSector" class="form-control">
+                        <option value="">Seleccionar...</option>
+                        <option value="Oficial" {% if perfil.sector == 'Oficial' %}selected{% endif %}>Oficial (público)</option>
+                        <option value="Privado" {% if perfil.sector == 'Privado' %}selected{% endif %}>Privado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group mc-edad">
+                <label for="edad">Tu edad</label>
+                <input type="number" id="edad" class="form-control" min="12" max="25" inputmode="numeric" value="{{ perfil.edad or '' }}">
+            </div>
+        </section>
+
+        <section class="card mc-bloque">
+            <h2 class="mc-titulo">Dónde vives</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="municipio">Municipio</label>
+                    <select id="municipio" class="form-control">
+                        <option value="">Seleccionar...</option>
+                        {% for m in municipios %}
+                        <option value="{{ m.clave }}" {% if perfil.municipio == m.clave %}selected{% endif %}>{{ m.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="complemento">Apartamento, interior o casa <span class="mc-opcional">(opcional)</span></label>
+                    <input type="text" id="complemento" class="form-control" maxlength="80" value="{{ perfil.complemento or '' }}" placeholder="Apto 301">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <div class="mc-fila">
+                    <input type="text" id="direccion" class="form-control" maxlength="200" autocomplete="street-address"
+                           placeholder="Calle 42A # 108-36" value="{{ perfil.direccion or '' }}">
+                    <button type="button" class="btn btn-secondary" id="btnUbicar">Ubicar en el mapa</button>
+                </div>
+                <p class="mc-ayuda" id="estadoDireccion" aria-live="polite">Escríbela como aparece en un recibo de servicios: tipo de vía, número, # y placa.</p>
+            </div>
+            <div id="mapaCasa" class="mc-mapa" {% if perfil.lat is none %}hidden{% endif %} aria-label="Mapa para confirmar tu casa"></div>
+            <p class="mc-ayuda" id="ayudaPin" {% if perfil.lat is none %}hidden{% endif %}>Si el punto no quedó sobre tu casa, arrástralo hasta el lugar correcto.</p>
+        </section>
+
+        <div class="alert alert-danger" id="errorEscolar" hidden role="alert"></div>
+        <div class="mc-acciones">
+            <a href="{{ siguiente }}" class="btn btn-ghost">Lo hago después</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="btnGuardar">Guardar y continuar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="{{ url_for('static', filename='js/mapa_base.js') }}"></script>
+<script src="{{ url_for('static', filename='js/buscador_colegios.js') }}"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const siguiente = {{ siguiente|tojson }};
+  const inicial = {{ perfil|tojson }};
+  const MENSAJES = {
+    exacta: 'La encontramos. Revisa que el punto esté sobre tu casa.',
+    interpolada: 'Encontramos tu cuadra y ubicamos la placa. Revisa el punto.',
+    cuadra: 'Encontramos tu cuadra, pero no la placa exacta. Mueve el punto hasta tu casa.',
+    osm: 'La ubicamos de forma aproximada. Mueve el punto hasta tu casa.',
+    formato: 'No entendimos la dirección. Escríbela así: Calle 42A # 108-36.',
+    municipio: 'Elige primero tu municipio.',
+    sin_resultado: 'No la encontramos. Pon el punto en tu casa arrastrándolo en el mapa.',
+  };
+
+  BuscadorColegios.iniciar(document.querySelector('[data-colegio]'));
+  $('noAparece').addEventListener('change', (e) => {
+    $('colegioManual').hidden = !e.target.checked;
+    $('colegioBuscar').disabled = e.target.checked;
+  });
+  $('colegioBuscar').disabled = $('noAparece').checked;
+
+  let mapa = null, marcador = null, ubicacion = null, movido = false;
+
+  function ponerPin(lat, lon, zoom) {
+    $('mapaCasa').hidden = false;
+    $('ayudaPin').hidden = false;
+    if (!mapa) {
+      mapa = MapaBase.crear('mapaCasa', { centro: [lon, lat], zoom: zoom });
+      marcador = new maplibregl.Marker({ color: '#f07f06', draggable: true }).setLngLat([lon, lat]).addTo(mapa);
+      marcador.on('dragend', () => { movido = true; });
+      mapa.on('click', (e) => { marcador.setLngLat(e.lngLat); movido = true; });
+    } else {
+      marcador.setLngLat([lon, lat]);
+      mapa.flyTo({ center: [lon, lat], zoom: zoom, duration: 600 });
+    }
+  }
+
+  if (inicial && inicial.lat != null) {
+    ubicacion = { precision: inicial.precision };
+    ponerPin(inicial.lat, inicial.lon, 17);
+  }
+
+  $('btnUbicar').addEventListener('click', async () => {
+    const estado = $('estadoDireccion');
+    if (!$('municipio').value) { estado.textContent = MENSAJES.municipio; return; }
+    estado.textContent = 'Buscando…';
+    $('btnUbicar').disabled = true;
+    try {
+      const r = await fetch('/estudiante/api/geocodificar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direccion: $('direccion').value, municipio: $('municipio').value }),
+      });
+      const d = await r.json();
+      if (!r.ok) { estado.textContent = d.error || 'No se pudo buscar la dirección.'; return; }
+      movido = false;
+      if (d.encontrada) {
+        ubicacion = { precision: d.precision };
+        estado.textContent = (d.normalizada ? 'Entendimos: ' + d.normalizada + '. ' : '') + MENSAJES[d.precision];
+        ponerPin(d.lat, d.lon, 17);
+      } else {
+        ubicacion = { precision: 'manual' };
+        estado.textContent = MENSAJES[d.motivo] || MENSAJES.sin_resultado;
+        if (d.motivo !== 'municipio' && d.centro) ponerPin(d.centro[0], d.centro[1], 14);
+      }
+    } catch (e) {
+      estado.textContent = 'No se pudo buscar la dirección. Intenta de nuevo.';
+    } finally {
+      $('btnUbicar').disabled = false;
+    }
+  });
+
+  $('formEscolar').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const error = $('errorEscolar');
+    error.hidden = true;
+    const manual = $('noAparece').checked;
+    const datos = {
+      sede_codigo: manual ? '' : document.querySelector('input[name="sede_codigo"]').value,
+      colegio_texto: manual ? $('colegioTexto').value : '',
+      sector: manual ? $('colegioSector').value : '',
+      edad: $('edad').value,
+    };
+    if (!manual && !datos.sede_codigo) { error.textContent = 'Elige tu colegio de la lista o marca "Mi colegio no aparece".'; error.hidden = false; return; }
+    if (marcador) {
+      const p = marcador.getLngLat();
+      Object.assign(datos, {
+        municipio: $('municipio').value, direccion: $('direccion').value, complemento: $('complemento').value,
+        lat: p.lat, lon: p.lng, precision: ubicacion ? ubicacion.precision : 'manual', movido: movido,
+      });
+    } else if ($('direccion').value.trim()) {
+      error.textContent = 'Pulsa "Ubicar en el mapa" para confirmar tu dirección.'; error.hidden = false; return;
+    }
+    $('btnGuardar').disabled = true;
+    try {
+      const r = await fetch('/estudiante/api/perfil-escolar', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
+      });
+      const d = await r.json();
+      if (!r.ok) { error.textContent = d.error || 'No se pudo guardar.'; error.hidden = false; return; }
+      window.location.href = siguiente;
+    } catch (err) {
+      error.textContent = 'No se pudo guardar. Intenta de nuevo.'; error.hidden = false;
+    } finally {
+      $('btnGuardar').disabled = false;
+    }
+  });
+})();
+</script>
+{% endblock %}

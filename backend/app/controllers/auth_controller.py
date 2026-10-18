@@ -6,6 +6,7 @@ from flask_jwt_extended import (
 )
 from ..services.auth_service import AuthService
 from ..services.demografico_service import guardar_genero
+from ..services.escolar_service import guardar_perfil
 from ..extensions import db
 from ..utils.audit import registrar_auditoria
 from ..utils.rate_limit import allow_request
@@ -48,6 +49,11 @@ def registro():
     try:
         usuario = AuthService.registrar_usuario(datos)
         guardar_genero(usuario.id, datos.get('genero'))
+        if datos.get('sede_codigo'):
+            try:
+                guardar_perfil(usuario.id, {'sede_codigo': datos['sede_codigo']})
+            except ValueError:
+                pass  # el colegio se puede completar después en "Tu colegio y tu dirección"
         registrar_auditoria(
             usuario.id, 'REGISTRO', 'auth',
             f'Nuevo usuario registrado: {usuario.email}',

@@ -1831,3 +1831,39 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
     .siguiente-fox { width: 120px; }
     .definicion { flex-direction: column; text-align: center; }
 }
+
+/* =====================================================
+   COLEGIO Y DIRECCIÓN DEL ESTUDIANTE (2026-10)
+   ===================================================== */
+/* El atributo hidden tiene que ganarle a display:grid/flex de las utilidades. */
+[hidden] { display: none !important; }
+.mc { max-width: 760px; }
+.mc-form { display: flex; flex-direction: column; gap: var(--sp-5); }
+.mc-bloque { margin: 0; }
+.mc-titulo { font-size: var(--fs-lg); margin: 0 0 var(--sp-4); }
+.mc-check { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); color: var(--text-secondary); margin-bottom: var(--sp-4); cursor: pointer; }
+.mc-edad { max-width: 160px; }
+.mc-opcional { font-weight: 400; color: var(--text-secondary); }
+.mc-fila { display: flex; gap: var(--sp-2); }
+.mc-fila .form-control { flex: 1; min-width: 0; }
+.mc-fila .btn { white-space: nowrap; }
+.mc-ayuda { font-size: var(--fs-sm); color: var(--text-secondary); margin: var(--sp-2) 0 0; }
+.mc-mapa { height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-top: var(--sp-4); }
+.mc-acciones { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-5); }
+.mc-acciones > a { color: var(--text-secondary); font-size: var(--fs-sm); text-decoration: underline; }
+.mc-combo { position: relative; }
+.bc-lista { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.08); max-height: 300px; overflow-y: auto; }
+.bc-op { padding: 8px 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.bc-op:hover, .bc-op.activo { background: #fff4e8; }
+.bc-nombre { font-weight: 600; font-size: var(--fs-sm); color: var(--text-primary); }
+.bc-detalle { font-size: var(--fs-xs); color: var(--text-secondary); }
+.bc-vacio { padding: 10px; font-size: var(--fs-sm); color: var(--text-secondary); }
+.aviso-escolar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); }
+.aviso-escolar p { margin: 0; color: var(--text-secondary); font-size: var(--fs-sm); }
+@media (max-width: 640px) {
+    .mc-fila { flex-direction: column; }
+    .mc-acciones { flex-direction: column-reverse; align-items: stretch; }
+    .mc-mapa { height: 260px; }
+    .aviso-escolar { flex-direction: column; align-items: flex-start; }
+}

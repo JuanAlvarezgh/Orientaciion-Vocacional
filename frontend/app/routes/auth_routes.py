@@ -66,7 +66,7 @@ def registro():
             'documento': request.form.get('documento'),
             'tipo_documento': request.form.get('tipo_documento', 'CC'),
             'telefono': request.form.get('telefono'),
-            'grado_id': request.form.get('grado_id', type=int),
+            'sede_codigo': request.form.get('sede_codigo') or None,
             'semestre': request.form.get('semestre', type=int),
             'genero': request.form.get('genero') or None,
             'rol': rol,
@@ -119,6 +119,10 @@ def consentimiento():
 
         if status == 201 and aceptado:
             session['consentimiento'] = True
+            # Paso siguiente: colegio, edad y dirección (se puede dejar para después).
+            escolar, st = api_request('GET', '/escolar/mio')
+            if st == 200 and not escolar.get('completo'):
+                return redirect(url_for('estudiante.mi_colegio', next=destino))
             return redirect(destino)
         elif not aceptado:
             flash('Debes aceptar el consentimiento para continuar.', 'warning')
