@@ -15,6 +15,14 @@ CAMPOS_VIEJOS = {'nombre_colegio': 'colegio', 'tipo_colegio': 'sector', 'edad': 
 RANGOS_EDAD = ['≤14 años', '15 años', '16 años', '17 años', '18 años', '19+ años', 'No especificado']
 
 
+DOMINIO_SIMULACION = '@simulacion.local'
+
+
+def es_simulado(email):
+    """Las cohortes simuladas (la del Excel y la del Valle) usan este dominio de correo."""
+    return bool(email) and email.lower().endswith(DOMINIO_SIMULACION)
+
+
 def normalizar_grado(valor):
     if valor in (None, ''):
         return None
@@ -54,9 +62,9 @@ def rango_edad(valor):
 def por_usuario(incluir_simulados=True):
     """{usuario_id: {'colegio', 'sector', 'edad', 'grado', 'municipio', 'estrato', 'simulado'}}."""
     datos = {}
-    for u_id, semestre in db.session.query(Usuario.id, Usuario.semestre).all():
+    for u_id, semestre, email in db.session.query(Usuario.id, Usuario.semestre, Usuario.email).all():
         datos[u_id] = {'colegio': None, 'sector': None, 'edad': None, 'grado': normalizar_grado(semestre),
-                       'municipio': None, 'estrato': None, 'simulado': False}
+                       'municipio': None, 'estrato': None, 'simulado': es_simulado(email)}
 
     campos = {c.id: CAMPOS_VIEJOS[c.nombre]
               for c in CampoDemografico.query.filter(CampoDemografico.nombre.in_(CAMPOS_VIEJOS)).all()}
@@ -75,7 +83,7 @@ def por_usuario(incluir_simulados=True):
             'colegio': p.colegio, 'sector': p.sector, 'edad': p.edad,
             'municipio': p.municipio, 'estrato': p.estrato,
         }.items() if v not in (None, '')})
-        fila['simulado'] = bool(p.simulado)
+        fila['simulado'] = fila['simulado'] or bool(p.simulado)
 
     for fila in datos.values():
         fila['grado'] = normalizar_grado(fila['grado'])
