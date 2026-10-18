@@ -48,7 +48,7 @@ function renderHeatmap(matriz, grados, areas) {
 }
 
 
-fetch('/estadisticas/evolucion-agregada')
+fetch('{{ url_for('admin.api_evolucion_agregada') }}')
     .then(r => r.json())
     .then(data => {
         document.getElementById('estadisticas-agregadas-cargando').style.display = 'none';
@@ -57,19 +57,21 @@ fetch('/estadisticas/evolucion-agregada')
         const alerta = document.getElementById('evolucion-vocacional-alerta');
         if (data.mensaje && data.mensaje.toLowerCase().includes('denegado')) {
             cont.innerHTML = '<div class="alert alert-danger" style="margin-top:2rem;">Acceso denegado</div>';
-        } else if (data.estadisticas) {
+        } else if (data.estadisticas && data.estadisticas.length) {
+            cont.style.display = '';
             cont.innerHTML = '<h3>Promedios, Mediana y Desviación por Grado y Área</h3>' + renderTablaEstadisticas(data.estadisticas);
         } else if (data.heatmap) {
             cont.innerHTML = '<h3>Mapa de calor de desempeño por área y grado</h3>' + renderHeatmap(data.heatmap, data.grados, data.areas);
         }
-        if (data.evolucion) {
+        if (data.evolucion && data.evolucion.length) {
             evolDiv.style.display = '';
             renderEvolucionVocacional(data.evolucion);
         } else if (evolDiv) {
             evolDiv.style.display = '';
             alerta.innerHTML = '<div style="text-align:center;padding:2.5rem 0;color:#525252;">Se necesitan pruebas completadas para mostrar la evolución vocacional.</div>';
         }
-        if (!data.estadisticas && !data.heatmap && !data.evolucion) {
+        if (!(data.estadisticas && data.estadisticas.length) && !data.heatmap && !(data.evolucion && data.evolucion.length)) {
+            cont.style.display = '';
             cont.innerHTML = '<div class="empty-state"><p>No hay datos disponibles.</p></div>';
         }
     })

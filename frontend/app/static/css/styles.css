@@ -1867,3 +1867,96 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
     .mc-mapa { height: 260px; }
     .aviso-escolar { flex-direction: column; align-items: flex-start; }
 }
+
+/* =====================================================
+   ESTADÍSTICA AVANZADA (2026-10)
+   ===================================================== */
+.ea { max-width: 1180px; }
+.ea-cabecera { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-6); margin: var(--sp-7) 0 var(--sp-6); flex-wrap: wrap; }
+.ea-cabecera h1 { margin: 0 0 var(--sp-2); }
+.ea-cabecera p { margin: 0; color: var(--text-secondary); max-width: 60ch; }
+.ea-ayuda-muestra { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid #c9c6d2; font-size: 11px; font-weight: 700; color: #6f6b80; vertical-align: 1px; }
+.ea-controles { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2); }
+.ea-interruptor { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); cursor: pointer; }
+.ea-estado { font-size: var(--fs-xs); color: var(--text-secondary); }
+.ea-aviso { background: #fff4e8; border: 1px solid #f7c99a; color: #7a3d00; border-radius: 10px; padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); margin-bottom: var(--sp-5); }
+.ea-rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-5); margin-bottom: var(--sp-9); align-items: start; }
+.ea-tarjeta { margin: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.ea-tarjeta-cabeza { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); }
+.ea-pregunta { margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #8a8698; }
+.ea-ayuda { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid #d9d7e0; background: #fff; color: #6f6b80; font-weight: 700; font-size: 13px; cursor: pointer; line-height: 1; }
+.ea-ayuda:hover, .ea-ayuda:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+.ea-conclusion { margin: 0; font-size: 1.12rem; line-height: 1.4; font-weight: 600; color: var(--text-primary); }
+.ea-faltan_datos .ea-conclusion { color: var(--text-secondary); font-weight: 500; }
+.ea-sin_evidencia .ea-conclusion { color: #3f3d4a; }
+.ea-grafica { position: relative; height: 240px; }
+.ea-g-pareto { height: 290px; }
+.ea-g-apiladas { height: 260px; }
+.ea-detalle { margin: 0; font-size: var(--fs-sm); color: var(--text-secondary); }
+.ea-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ea-lista li { display: flex; justify-content: space-between; gap: var(--sp-3); font-size: var(--fs-sm); border-bottom: 1px solid #f0eef4; padding: 4px 0; }
+.ea-lista li span:last-child { color: var(--text-secondary); white-space: nowrap; }
+.ea-pie { margin-top: auto; font-size: var(--fs-xs); color: #8a8698; }
+.ea-progreso { height: 6px; border-radius: 3px; background: #f0eef4; overflow: hidden; }
+.ea-progreso span { display: block; height: 100%; background: var(--accent); }
+.ea-metodo { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); border: 0; border-radius: 16px; padding: var(--sp-7); box-shadow: 0 24px 60px rgba(0,0,0,.18); }
+.ea-metodo::backdrop { background: rgba(20, 18, 28, .35); }
+.ea-metodo h2 { margin: 0 0 var(--sp-4); font-size: var(--fs-lg); }
+.ea-metodo h3 { margin: var(--sp-5) 0 var(--sp-2); font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .04em; color: #8a8698; }
+.ea-metodo ol { padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); }
+.ea-metodo p { font-size: var(--fs-sm); margin: 0; }
+.ea-metodo-kicker { color: var(--accent) !important; font-weight: 700; font-size: var(--fs-xs) !important; text-transform: uppercase; letter-spacing: .05em; margin-bottom: var(--sp-1) !important; }
+.ea-metodo-cerrar { position: absolute; top: 12px; right: 12px; }
+.ea-metodo-cerrar button { border: 0; background: none; font-size: 24px; cursor: pointer; color: #8a8698; }
+.ea-formulas { margin-top: var(--sp-4); overflow-x: auto; }
+.ea-resultado { font-variant-numeric: tabular-nums; color: #3f3d4a; }
+@media (max-width: 860px) {
+    .ea-rejilla { grid-template-columns: 1fr; }
+    .ea-controles { align-items: flex-start; }
+}
+
+/* =====================================================
+   MAPA DE BIENESTAR (2026-10)
+   ===================================================== */
+.mb { position: relative; display: flex; height: calc(100vh - 64px); min-height: 520px; }
+.mb-panel { width: 300px; flex: none; overflow-y: auto; background: #fff; border-right: 1px solid var(--border); padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-4); transition: margin-left .2s ease; z-index: 2; }
+.mb-panel.plegado { margin-left: -300px; }
+.mb-panel-cabeza { display: flex; justify-content: space-between; align-items: center; }
+.mb-panel h1 { font-size: var(--fs-lg); margin: 0; }
+.mb-resumen { margin: 0; font-size: var(--fs-sm); color: var(--text-secondary); }
+.mb-grupo { display: flex; flex-direction: column; gap: 6px; }
+.mb-etiqueta { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8a8698; }
+.mb-check { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); cursor: pointer; }
+.mb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid #d9d7e0; background: #fff; font-size: var(--fs-xs); cursor: pointer; color: var(--text-primary); }
+.mb-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.mb-chip[aria-pressed="true"] { border-color: #1c1b22; background: #1c1b22; color: #fff; }
+.mb-segmentos { display: flex; border: 1px solid #d9d7e0; border-radius: 10px; overflow: hidden; }
+.mb-segmentos label { flex: 1; text-align: center; cursor: pointer; }
+.mb-segmentos input { position: absolute; opacity: 0; pointer-events: none; }
+.mb-segmentos span { display: block; padding: 6px 4px; font-size: var(--fs-xs); }
+.mb-segmentos input:checked + span { background: #1c1b22; color: #fff; }
+.mb-segmentos input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+.mb-leyenda { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-xs); color: var(--text-secondary); }
+.mb-leyenda span { display: inline-flex; align-items: center; gap: 5px; }
+.mb-leyenda i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.mb-rampa { width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #fde2c4, #f7a457, #e8730a, #9a4300); }
+.mb-rampa-txt { width: 100%; display: flex !important; justify-content: space-between; }
+.mb-rampa-txt em { font-style: normal; }
+.mb-simulados { margin-top: var(--sp-2); }
+.mb-mapa { flex: 1; min-width: 0; }
+.mb-plegar { position: absolute; z-index: 3; top: 12px; left: 312px; transition: left .2s ease; border: 1px solid #d9d7e0; background: #fff; border-radius: 8px; padding: 6px 12px; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.mb-panel.plegado + .mb-plegar { left: 12px; }
+.mb-pop { display: flex; flex-direction: column; gap: 3px; font-size: 13px; font-family: 'Inter', system-ui, sans-serif; }
+.mb-pop strong { font-size: 14px; }
+.mb-pop span { color: #52505e; }
+.mb-pop em { color: #b45309; font-style: normal; font-size: 12px; }
+.mb-barra { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.mb-barra i { display: block; }
+@media (max-width: 760px) {
+    .mb { flex-direction: column; height: calc(100vh - 56px); }
+    .mb-panel { position: absolute; bottom: 0; left: 0; right: 0; width: auto; max-height: 55%; border-right: 0; border-top: 1px solid var(--border); border-radius: 16px 16px 0 0; box-shadow: 0 -8px 24px rgba(0,0,0,.1); transition: transform .2s ease; }
+    .mb-panel.plegado { margin-left: 0; transform: translateY(calc(100% - 52px)); }
+    .mb-plegar { left: auto; right: 12px; }
+    .mb-panel.plegado + .mb-plegar { left: auto; }
+}
