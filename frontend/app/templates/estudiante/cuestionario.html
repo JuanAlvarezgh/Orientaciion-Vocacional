@@ -4,6 +4,11 @@
 {% block content %}
 <div class="container q-flow">
 
+    <div class="q-mitad" id="qMitad" role="status" aria-live="polite" hidden>
+        <img src="{{ url_for('static', filename='img/mascota/mitad-cuestionario.webp') }}" alt="" onerror="this.remove()">
+        <p><b>¡Vas por la mitad!</b><span>Respira, toma agua y sigue a tu ritmo.</span></p>
+    </div>
+
     <!-- Barra de progreso superior -->
     <div class="q-progress">
         {# Seis puntos de avance: la prueba se recorre en seis tramos iguales.
@@ -196,6 +201,11 @@ function updateProgress() {
         ? 'Completado' : ('Pregunta ' + (idx + 1) + ' de ' + total);
     // Seis tramos: se llena el punto de cada sexto superado; el tramo en curso
     // queda "en progreso".
+    if (!window.__mitadVista && frac >= 0.5 && frac < 1 && answered > 0) {
+        window.__mitadVista = true;
+        const aviso = document.getElementById('qMitad');
+        if (aviso) { aviso.hidden = false; setTimeout(() => { aviso.hidden = true; }, 4500); }
+    }
     const llenos = Math.floor(frac * 6 + 1e-9);
     qDots.forEach((d, i) => {
         d.classList.toggle('done', i < llenos);

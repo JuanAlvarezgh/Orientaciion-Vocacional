@@ -2012,3 +2012,21 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
     .rh-accion .rh-figura { height: 190px; }
 }
 .escena-cabeza { height: 72px; width: auto; margin-left: auto; }
+
+/* Escenas en cuestionario, explorador y páginas de Bienestar (2026-10) */
+.q-mitad { position: fixed; z-index: 60; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 12px;
+    background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 10px 18px 10px 10px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.12); max-width: 330px; }
+.q-mitad img { height: 92px; width: auto; }
+.q-mitad p { margin: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-sm); color: var(--text-secondary); }
+.q-mitad b { color: var(--text-primary); font-size: var(--fs-body); }
+.expl-fox { float: right; height: 120px; width: auto; margin: 0 0 8px 16px; }
+.ea-cabecera { align-items: center; }
+.ea-cabecera-texto { flex: 1; min-width: 260px; }
+.ea-fox { height: 96px; width: auto; flex: none; }
+.mb-fox { float: right; height: 110px; width: auto; margin: 0 0 8px 12px; }
+@media (max-width: 640px) {
+    .q-mitad { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+    .expl-fox { height: 84px; }
+    .ea-fox { height: 72px; }
+}
