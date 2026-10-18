@@ -1991,3 +1991,24 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
 .cp-texto h1 span { color: var(--accent); }
 .cp-texto p { color: var(--text-secondary); }
 .cp-acciones { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+/* =====================================================
+   ESCENAS DEL ZORRO JUNTO AL TEXTO (estilo 16personalities, 2026-10)
+   ===================================================== */
+.con-escena { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: var(--sp-6); align-items: center; }
+.con-escena .escena { max-width: 210px; max-height: 220px; width: auto; height: auto; justify-self: end; }
+.escena-trio { float: right; display: flex; align-items: flex-end; margin: -8px 0 var(--sp-4) var(--sp-5); }
+.escena-trio img { height: 150px; width: auto; margin-left: -26px; }
+.escena-trio img:first-child { margin-left: 0; }
+.rh-accion .rh-figura { height: 260px; width: auto; }
+.cc-cabeza { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.cc-cabeza img { height: 56px; width: auto; }
+.cc-cabeza h2 { margin: 0; }
+@media (max-width: 640px) {
+    .con-escena { grid-template-columns: 1fr; }
+    .con-escena .escena { order: -1; width: 140px; justify-self: center; }
+    .escena-trio { float: none; justify-content: center; margin: 0 0 var(--sp-4); }
+    .escena-trio img { height: 110px; }
+    .rh-accion .rh-figura { height: 190px; }
+}
+.escena-cabeza { height: 72px; width: auto; margin-left: auto; }

@@ -61,11 +61,18 @@
                 </button>
                 {% endif %}
             </div>
+            {% set accion = fig[0] ~ '-accion' %}
+            {% if accion in escenas %}
+            <div class="rh-grupo n1 rh-accion">
+                <img class="rh-figura" src="{{ url_for('static', filename='img/mascota/' ~ accion ~ '.webp') }}" alt="">
+            </div>
+            {% else %}
             <div class="rh-grupo n{{ fig[1]|length }}">
                 {% for archivo in fig[1] %}
                 <img class="rh-figura" src="{{ url_for('static', filename='img/mascota/' ~ archivo) }}" alt="">
                 {% endfor %}
             </div>
+            {% endif %}
         </div>
 
         {% if dj.advertencia %}
@@ -99,6 +106,8 @@
         <div class="definicion definicion-{{ definicion.tipo }}">
             {% if definicion.tipo == 'equilibrado' %}
             <img src="{{ url_for('static', filename='img/mascota/mascota-equipo.webp') }}" alt="" onerror="this.remove()">
+            {% elif 'tus-areas' in escenas %}
+            <img src="{{ url_for('static', filename='img/mascota/tus-areas.webp') }}" alt="">
             {% endif %}
             <p>
                 {% if definicion.tipo == 'equilibrado' %}
@@ -178,6 +187,13 @@
                 <h2>Programas en la USB</h2>
                 <span class="rasgos-ayuda">Pregrados de la San Buenaventura Medellín relacionados con tus campos más fuertes</span>
             </div>
+            {% if (fig[0] ~ '-accion') in escenas %}
+            <div class="escena-trio">
+                {% for archivo in fig[1] %}
+                <img src="{{ url_for('static', filename='img/mascota/' ~ archivo) }}" alt="">
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="programas-grid">
                 {% for p in programas %}
                 <a class="programa{% if p.grupo == 'secundario' %} programa-sec{% endif %}" href="{{ p.url }}" target="_blank" rel="noopener">
@@ -199,16 +215,23 @@
     <section id="cap-fortalezas" class="capitulo">
         <div class="card">
             <div class="card-header"><h2>Fortalezas</h2></div>
-            {% if fortalezas %}
-            <ul class="lista-limpia">
-            {% for area, texto in fortalezas %}
-                <li>{% if area %}<b>{{ area }}:</b> {% endif %}{{ texto }}</li>
-            {% endfor %}
-            </ul>
-            {% endif %}
-            {% for r in recomendaciones %}
-            <p class="nota-recomendacion">{{ r }}</p>
-            {% endfor %}
+            <div class="{% if 'fortalezas' in escenas %}con-escena{% endif %}">
+                <div>
+                    {% if fortalezas %}
+                    <ul class="lista-limpia">
+                    {% for area, texto in fortalezas %}
+                        <li>{% if area %}<b>{{ area }}:</b> {% endif %}{{ texto }}</li>
+                    {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% for r in recomendaciones %}
+                    <p class="nota-recomendacion">{{ r }}</p>
+                    {% endfor %}
+                </div>
+                {% if 'fortalezas' in escenas %}
+                <img class="escena" src="{{ url_for('static', filename='img/mascota/fortalezas.webp') }}" alt="">
+                {% endif %}
+            </div>
         </div>
     </section>
     {% endif %}
@@ -240,6 +263,7 @@
             <div class="card-header">
                 <h2>Evolución vocacional</h2>
                 <span class="rasgos-ayuda">Tus perfiles a lo largo del tiempo</span>
+                {% if 'evolucion' in escenas %}<img class="escena-cabeza" src="{{ url_for('static', filename='img/mascota/evolucion.webp') }}" alt="">{% endif %}
             </div>
             <div class="chart-container" style="height: 300px;">
                 <canvas id="chartEvolucion"></canvas>
@@ -291,7 +315,10 @@
             data-enlace="{{ url_for('estudiante.api_carta', aplicacion_id=aplicacion.id) }}"
             data-perfil="{{ perfil.perfil_principal }}">
         <form method="dialog" class="ea-metodo-cerrar"><button aria-label="Cerrar">×</button></form>
-        <h2 id="ccTitulo">Tu carta</h2>
+        <div class="cc-cabeza">
+            {% if 'selfie' in escenas %}<img src="{{ url_for('static', filename='img/mascota/selfie.webp') }}" alt="">{% endif %}
+            <h2 id="ccTitulo">Tu carta</h2>
+        </div>
         <div class="cc-cuerpo">
             <div class="cc-vista"><img id="ccImagen" alt="Tu carta con tu perfil {{ perfil.perfil_principal }}"></div>
             <div class="cc-opciones">

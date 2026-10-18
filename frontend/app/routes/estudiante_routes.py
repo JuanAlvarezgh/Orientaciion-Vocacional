@@ -122,6 +122,20 @@ def datos_demograficos():
                            datos_existentes=datos_existentes)
 
 
+# Escenas del zorro haciendo algo (estilo 16personalities). Solo se muestran las que ya
+# existen en static/img/mascota, así la página no cambia hasta que llega cada imagen.
+ESCENAS = ('realista-accion', 'investigador-accion', 'artistico-accion', 'social-accion',
+           'emprendedor-accion', 'convencional-accion', 'tus-areas', 'fortalezas', 'evolucion',
+           'selfie', 'mitad-cuestionario', 'explorador')
+
+
+def escenas_disponibles():
+    import os
+    from flask import current_app
+    carpeta = os.path.join(current_app.static_folder, 'img', 'mascota')
+    return {e for e in ESCENAS if os.path.exists(os.path.join(carpeta, f'{e}.webp'))}
+
+
 def _destino_seguro(valor, por_defecto):
     return valor if valor and valor.startswith('/') and not valor.startswith('//') else por_defecto
 
@@ -379,6 +393,7 @@ def resultados(aplicacion_id):
     hay_puntajes = bool(puntajes_area or intereses_puntajes or competencias_puntajes)
 
     return render_template('estudiante/resultados.html',
+                           escenas=escenas_disponibles(),
                            perfil=perfil,
                            resultados_dimension=data.get('resultados_dimension', []),
                            aplicacion=data.get('aplicacion'),
