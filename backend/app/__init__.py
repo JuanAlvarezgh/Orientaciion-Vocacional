@@ -57,6 +57,7 @@ def create_app(config_name=None):
     from .controllers.auditoria_controller import auditoria_bp
     from .controllers.demografico_controller import demografico_bp
     from .controllers.ml_controller import ml_bp
+    from .controllers.escolar_controller import escolar_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(usuario_bp, url_prefix='/api/usuarios')
@@ -72,6 +73,7 @@ def create_app(config_name=None):
     app.register_blueprint(auditoria_bp, url_prefix='/api/auditoria')
     app.register_blueprint(demografico_bp, url_prefix='/api/demografico')
     app.register_blueprint(ml_bp, url_prefix='/api/ml')
+    app.register_blueprint(escolar_bp, url_prefix='/api/escolar')
 
     # Ruta de health check
     @app.route('/api/health')
