@@ -1960,3 +1960,34 @@ a.paso:hover { border-color: var(--accent); background: var(--orange-soft); }
     .mb-plegar { left: auto; right: 12px; }
     .mb-panel.plegado + .mb-plegar { left: auto; }
 }
+
+/* =====================================================
+   CARTA PARA COMPARTIR (2026-10)
+   ===================================================== */
+.rh-compartir { margin-top: var(--sp-4); display: inline-flex; align-items: center; gap: 8px; }
+.cc { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 32px); border: 0; border-radius: 18px; padding: var(--sp-6); box-shadow: 0 24px 60px rgba(0,0,0,.2); }
+.cc::backdrop { background: rgba(20, 18, 28, .45); }
+.cc h2 { margin: 0 0 var(--sp-4); font-size: var(--fs-lg); }
+.cc-cuerpo { display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: var(--sp-6); align-items: start; }
+.cc-vista { aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #f0eef4; }
+.cc-vista img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cc-vista img.cargando { opacity: .3; }
+.cc-opciones { display: flex; flex-direction: column; gap: var(--sp-3); }
+.cc-opciones .btn { justify-content: center; text-align: center; }
+@media (max-width: 640px) {
+    .cc { padding: var(--sp-5); }
+    .cc-cuerpo { grid-template-columns: 1fr; }
+    .cc-vista { max-width: 230px; margin: 0 auto; }
+}
+.lp-cartas { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2rem 24px; max-width: 1200px; margin: 0 auto; }
+.lp-cartas img { flex: none; width: 240px; height: auto; aspect-ratio: 9 / 16; border-radius: 16px; scroll-snap-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+.lp-cartas:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.cp { background: #fdfaf6; }
+.cp-main { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 56px; padding: 40px 20px; flex-wrap: wrap; }
+.cp-carta { width: min(380px, 86vw); height: auto; aspect-ratio: 9 / 16; border-radius: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.15); }
+.cp-texto { max-width: 440px; }
+.cp-kicker { color: var(--accent); font-weight: 700; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .05em; }
+.cp-texto h1 { font-size: clamp(1.8rem, 1.2rem + 2vw, 2.6rem); line-height: 1.15; margin: 8px 0 16px; }
+.cp-texto h1 span { color: var(--accent); }
+.cp-texto p { color: var(--text-secondary); }
+.cp-acciones { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }

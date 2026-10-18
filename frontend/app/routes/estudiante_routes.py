@@ -426,6 +426,28 @@ def descargar_reporte(aplicacion_id):
     )
 
 
+@estudiante_routes.route('/carta/<int:aplicacion_id>.png')
+@login_required
+def carta_png(aplicacion_id):
+    """La carta del estudiante; con ?nombre=1 lleva su primer nombre (solo en la descarga)."""
+    resp = api_request_file('GET', f'/compartir/mio/{aplicacion_id}.png', params={
+        'nombre': '1' if request.args.get('nombre') == '1' else '0', 'sitio': request.host})
+    if resp is None or resp.status_code != 200:
+        return jsonify({'error': 'No se pudo generar la carta'}), 404
+    from flask import Response as FlaskResponse
+    return FlaskResponse(resp.content, mimetype='image/png', headers={'Cache-Control': 'no-store'})
+
+
+@estudiante_routes.route('/api/carta/<int:aplicacion_id>')
+@login_required
+def api_carta(aplicacion_id):
+    data, status = api_request('GET', f'/compartir/mio/{aplicacion_id}')
+    if status != 200:
+        return jsonify(data), status
+    return jsonify({'codigo': data['codigo'],
+                    'url': url_for('main.carta_publica', codigo=data['codigo'], _external=True)}), 200
+
+
 @estudiante_routes.route('/explorador/<int:aplicacion_id>')
 @login_required
 def explorador(aplicacion_id):

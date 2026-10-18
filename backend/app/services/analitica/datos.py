@@ -16,7 +16,7 @@ from ..geo.geocodificador import distancia_m
 AREAS = ['Realista', 'Investigador', 'Artístico', 'Social', 'Emprendedor', 'Convencional']
 
 
-def _porcentajes(datos_json):
+def porcentajes_por_area(datos_json):
     por_area = (datos_json or {}).get('puntajes_por_area') or {}
     interes, competencia, combinado = {}, {}, {}
     for area in AREAS:
@@ -46,7 +46,7 @@ def filas(incluir_simulados=False):
 
     por_usuario = {}
     for usuario_id, fecha, perfil in registros:
-        interes, competencia, combinado = _porcentajes(perfil.datos_json)
+        interes, competencia, combinado = porcentajes_por_area(perfil.datos_json)
         completo = len(interes) == 6 and len(competencia) == 6
         u = por_usuario.setdefault(usuario_id, {'perfiles': [], 'ultimo': None, 'ultimo_completo': None})
         dato = {'fecha': fecha, 'principal': perfil.perfil_principal, 'secundario': perfil.perfil_secundario,

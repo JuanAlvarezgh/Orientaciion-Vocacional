@@ -54,6 +54,12 @@
                 {% if dj.preliminar %}
                 <span class="rh-nota">Resultado preliminar: falta la prueba de Intereses</span>
                 {% endif %}
+                {% if session.get('rol') == 'estudiante' %}
+                <button type="button" class="btn btn-secondary rh-compartir" data-abrir-carta>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Comparte tu carta
+                </button>
+                {% endif %}
             </div>
             <div class="rh-grupo n{{ fig[1]|length }}">
                 {% for archivo in fig[1] %}
@@ -273,10 +279,31 @@
             {% if session.get('rol') in ['bienestar', 'ti', 'directivo', 'investigador'] %}
             <a href="{{ url_for('admin.consultas') }}" class="btn btn-secondary btn-lg">&larr; Volver a consultas</a>
             {% else %}
+            <button type="button" class="btn btn-secondary btn-lg" data-abrir-carta>Comparte tu carta</button>
             <a href="{{ url_for('estudiante.inicio') }}" class="btn btn-secondary btn-lg">&larr; Volver al inicio</a>
             {% endif %}
         </div>
     </section>
+
+    {% if session.get('rol') == 'estudiante' %}
+    <dialog class="cc" id="dialogoCarta" aria-labelledby="ccTitulo"
+            data-png="{{ url_for('estudiante.carta_png', aplicacion_id=aplicacion.id) }}"
+            data-enlace="{{ url_for('estudiante.api_carta', aplicacion_id=aplicacion.id) }}"
+            data-perfil="{{ perfil.perfil_principal }}">
+        <form method="dialog" class="ea-metodo-cerrar"><button aria-label="Cerrar">×</button></form>
+        <h2 id="ccTitulo">Tu carta</h2>
+        <div class="cc-cuerpo">
+            <div class="cc-vista"><img id="ccImagen" alt="Tu carta con tu perfil {{ perfil.perfil_principal }}"></div>
+            <div class="cc-opciones">
+                <label class="mc-check"><input type="checkbox" id="ccNombre"> Poner mi primer nombre en la carta</label>
+                <button type="button" class="btn btn-primary" id="ccCompartir" hidden>Compartir</button>
+                <a class="btn btn-secondary" id="ccDescargar" download="mi-perfil-vocacional.png">Descargar imagen</a>
+                <button type="button" class="btn btn-secondary" id="ccCopiar">Copiar enlace</button>
+                <p class="mc-ayuda" id="ccEstado" aria-live="polite">El enlace muestra tu perfil y tus porcentajes, nunca tu nombre.</p>
+            </div>
+        </div>
+    </dialog>
+    {% endif %}
 
     {% else %}
     <div class="card">
@@ -296,6 +323,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/compartir_carta.js') }}"></script>
 <script>
 // Barra de capítulos: marca el capítulo visible y lo mantiene a la vista en el celular.
 (function () {

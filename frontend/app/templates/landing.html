@@ -222,6 +222,22 @@
     </div>
 </section>
 
+{% if cartas_ejemplo %}
+<!-- Cartas para compartir -->
+<section class="lp-section">
+    <div class="lp-section-head">
+        <span class="lp-label">Tu carta</span>
+        <h2>Al terminar, comparte tu perfil</h2>
+        <p class="sub">Cada perfil tiene su carta con tus seis campos y los programas de la USB que encajan contigo. La puedes subir a tus historias o mandar por WhatsApp.</p>
+    </div>
+    <div class="lp-cartas" tabindex="0" aria-label="Cartas de ejemplo, una por perfil">
+        {% for codigo in cartas_ejemplo %}
+        <img src="{{ url_for('main.carta_publica_png', codigo=codigo) }}" alt="Carta de ejemplo de un perfil" loading="lazy" width="270" height="480">
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 <!-- CTA final -->
 <section class="lp-section alt">
     <div class="lp-section-inner lp-final">
