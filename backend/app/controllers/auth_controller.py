@@ -9,7 +9,7 @@ from ..services.demografico_service import guardar_genero
 from ..services.escolar_service import guardar_perfil, validar as validar_escolar
 from ..extensions import db
 from ..utils.audit import registrar_auditoria
-from ..utils.rate_limit import allow_request
+from ..utils.rate_limit import allow_request, ip_cliente
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -38,7 +38,7 @@ def registro():
 
     # El endpoint público nunca puede crear roles privilegiados.
     datos['rol'] = 'estudiante'
-    if not allow_request(f"registro:{request.remote_addr}", 5, 600):
+    if not allow_request(f"registro:{ip_cliente()}", 5, 600):
         return jsonify({'error': 'Demasiados intentos de registro. Intenta nuevamente más tarde.'}), 429
     password = str(datos.get('password') or '')
     try:
@@ -78,7 +78,7 @@ def login():
     email = str(datos.get('email', '')).strip().lower()
     password = str(datos.get('password', ''))
 
-    if not allow_request(f"login:{request.remote_addr}:{email}", 10, 300):
+    if not allow_request(f"login:{ip_cliente()}:{email}", 10, 300):
         return jsonify({'error': 'Demasiados intentos de inicio de sesión. Intenta nuevamente en unos minutos.'}), 429
 
     try:

@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 
 from ..services import escolar_service
 from ..services.geo.direcciones import MUNICIPIOS
-from ..utils.rate_limit import allow_request
+from ..utils.rate_limit import allow_request, ip_cliente
 
 escolar_bp = Blueprint('escolar', __name__)
 
@@ -19,7 +19,7 @@ def municipios():
 @escolar_bp.route('/colegios', methods=['GET'])
 def colegios():
     """Autocompletar de colegios (público: el catálogo es información abierta)."""
-    if not allow_request(f'colegios:{request.remote_addr}', 120, 60):
+    if not allow_request(f'colegios:{ip_cliente()}', 120, 60):
         return jsonify({'error': 'Demasiadas búsquedas seguidas.'}), 429
     consulta = (request.args.get('q') or '')[:80]
     return jsonify({'colegios': escolar_service.buscar_colegios(consulta, request.args.get('municipio'))}), 200

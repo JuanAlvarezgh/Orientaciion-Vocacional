@@ -20,6 +20,11 @@ def create_app(config_name=None):
                 template_folder='templates',
                 static_folder='static')
     app.config.from_object(config_by_name[config_name])
+    if config_name == 'production':
+        # Render termina el HTTPS en su proxy: así url_for(..., _external=True) arma
+        # enlaces https y request.remote_addr es la IP del visitante, no la del proxy.
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
     Session(app)
 

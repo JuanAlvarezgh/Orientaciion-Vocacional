@@ -1,5 +1,7 @@
 """Cartas para compartir el resultado: la propia (con nombre opcional) y la pública por enlace."""
 
+from functools import lru_cache
+
 from flask import Blueprint, Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
@@ -8,7 +10,7 @@ from ..models.resultado import PerfilVocacional
 from ..models.usuario import Usuario
 from ..services import tarjeta_service
 from ..services.analitica.datos import porcentajes_por_area
-from ..utils.rate_limit import allow_request
+from ..utils.rate_limit import allow_request, ip_cliente
 
 compartir_bp = Blueprint('compartir', __name__)
 
@@ -95,12 +97,19 @@ def publico(codigo):
 
 @compartir_bp.route('/publico/<codigo>.png', methods=['GET'])
 def publico_png(codigo):
-    if not allow_request(f'carta:{request.remote_addr}', 60, 60):
+    if not allow_request(f'carta:{ip_cliente()}', 60, 60):
         return jsonify({'error': 'Demasiadas solicitudes'}), 429
     leido = tarjeta_service.leer_codigo(codigo)
     if not leido:
         return jsonify({'error': 'Enlace no válido'}), 404
     letras, porcentajes = leido
     formato = 'enlace' if request.args.get('formato') == 'enlace' else 'historia'
-    return _imagen(tarjeta_service.png(letras, porcentajes, formato, sitio=request.args.get('sitio', '')[:60]),
+    return _imagen(_png_publico(letras, tuple(porcentajes.items()), formato, request.args.get('sitio', '')[:60]),
                    max_edad=86400)
+
+
+@lru_cache(maxsize=256)
+def _png_publico(letras, porcentajes, formato, sitio):
+    """La carta pública solo depende del código firmado: se guarda para no redibujarla
+    (en el plan gratuito de Render cada carta cuesta uno o dos segundos de CPU)."""
+    return tarjeta_service.png(letras, dict(porcentajes), formato, sitio=sitio)
